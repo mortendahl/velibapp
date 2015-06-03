@@ -5,3 +5,4 @@
 .DS_Store
 /build
 /captures
+/mobile/src/debug/res/values/api_keys.xml

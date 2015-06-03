@@ -1,0 +1,4 @@
+<resources>
+    <string name="jcdecaux_endpoint_stations" translatable="false" templateMergeStrategy="preserve">https://api.jcdecaux.com/vls/v1/stations?contract=Paris</string>
+    <string name="jcdecaux_endpoint_constractlist" translatable="false" templateMergeStrategy="preserve">https://api.jcdecaux.com/vls/v1/contracts</string>
+</resources>

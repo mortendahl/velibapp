@@ -15,7 +15,7 @@ public class VelibStationMapItem implements ClusterItem {
         VelibStationMapItem item = new VelibStationMapItem();
         item.number = station.number;
         item.name = station.name;
-        item.position = new LatLng(station.latitude, station.longitude);
+        item.position = new LatLng(station.position.latitude, station.position.longitude);
 
         return item;
     }

@@ -44,9 +44,7 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getArguments() != null) {
-
-        }
+        if (getArguments() != null) {}
 
         mAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, android.R.id.text1, items);
     }
@@ -93,7 +91,7 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
 //
 //        updateList();
 
-        GuidingService.setDestination(station);
+        //GuidingService.setDestination(station);
 
         return true;
     }

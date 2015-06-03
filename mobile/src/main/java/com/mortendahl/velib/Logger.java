@@ -7,7 +7,7 @@ public final class Logger {
 
 	public static final String TAG_REST		= "VelibRest";
 	public static final String TAG_GUI		= "VelibGui";
-	public static final String TAG_DATAMODEL= "VelibData";
+	public static final String TAG_SERVICE  = "VelibService";
 	
 	private static final boolean SHORTEN_MESSAGES = false;
 	

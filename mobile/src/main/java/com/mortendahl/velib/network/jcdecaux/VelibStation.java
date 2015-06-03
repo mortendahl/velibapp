@@ -8,8 +8,7 @@ public class VelibStation {
     public int number;
     public String name;
     public String address;
-    public double latitude;
-    public double longitude;
+    public Position position;
     public boolean statusOpen;
     public String contract;
     public int bikeStands;
@@ -23,8 +22,7 @@ public class VelibStation {
         station.number = json.getInt("number");
         station.name = json.getString("name");
         station.address = json.getString("address");
-        station.latitude = json.getJSONObject("position").getDouble("lat");
-        station.longitude = json.getJSONObject("position").getDouble("lng");
+        station.position = new Position(json.getJSONObject("position").getDouble("lat"), json.getJSONObject("position").getDouble("lng"));
         station.statusOpen = json.getString("status").equals("OPEN");
         station.contract = json.getString("contract_name");
         station.bikeStands = json.getInt("bike_stands");

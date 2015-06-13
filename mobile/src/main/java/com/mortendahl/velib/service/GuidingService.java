@@ -11,7 +11,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
-import com.google.android.gms.maps.model.LatLng;
+import com.mortendahl.velib.library.ActionHandler;
+import com.mortendahl.velib.library.BaseService;
 import com.mortendahl.velib.network.jcdecaux.Position;
 import com.mortendahl.velib.Logger;
 import com.mortendahl.velib.R;
@@ -25,70 +26,44 @@ import java.util.HashMap;
 
 import de.greenrobot.event.EventBus;
 
-public class GuidingService extends Service {
+public class GuidingService extends BaseService {
 
     private EventBusListener eventBusListener = new EventBusListener();
     protected Updator updator;
 
-    private final HashMap<String, IntentHandler> actionHandlers;
-
     public GuidingService() {
-        actionHandlers = new HashMap<>();
-        actionHandlers.put(ClearDestinationHandler.ACTION, new ClearDestinationHandler());
-        actionHandlers.put(SetDestinationHandler.ACTION, new SetDestinationHandler());
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
+        setActionHandlers(
+                new ClearDestinationHandler(this),
+                new SetDestinationHandler(this)
+        );
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         updator = new Updator();
-        EventBus.getDefault().register(eventBusListener);
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-
-        boolean keepRunning = false;
-
-        String action = (intent != null ? intent.getAction() : null);
-        if (action != null) {
-            IntentHandler handler = actionHandlers.get(action);
-            keepRunning = handler.handle(intent);
-        }
-
+    protected void onIntentHandled(boolean keepRunning) {
         if (keepRunning) {
             if (!EventBus.getDefault().isRegistered(eventBusListener)) { EventBus.getDefault().register(eventBusListener); }
-            Notification notification = buildForegroundNotification();
-            startForeground(101, notification);
-            return START_STICKY;
 
         } else {
             EventBus.getDefault().unregister(eventBusListener);
             stopForeground(true);
-            stopSelf();
-            return START_NOT_STICKY;
 
         }
     }
 
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {}
-
-    private Notification buildForegroundNotification() {
+    protected Notification buildForegroundNotification() {
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
         notificationIntent.setAction(Intent.ACTION_MAIN);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-        Intent stopIntent = new Intent(this, GuidingService.class);
-        stopIntent.setAction(ClearDestinationHandler.ACTION);
-        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+        PendingIntent stopPendingIntent = clearDestinationAction.getPendingIntent(this);
 
         Notification notification;
 
@@ -163,7 +138,7 @@ public class GuidingService extends Service {
 
 
 
-    private class Updator implements Runnable {
+    protected class Updator implements Runnable {
 
         private final Handler handler;
 
@@ -212,28 +187,38 @@ public class GuidingService extends Service {
 
     protected Position destination = null;
 
-    private abstract class IntentHandler {
-        public abstract boolean handle(Intent intent);
-    }
 
+    public static final SetDestinationHandler.Invoker setDestinationAction = new SetDestinationHandler.Invoker();
 
-    public static void setDestination(Position destination) {
-        Context context = VelibApplication.getCachedAppContext();
-        Intent intent = new Intent(context, GuidingService.class);
-        intent.setAction(SetDestinationHandler.ACTION);
-        intent.putExtra(SetDestinationHandler.KEY_LATITUDE, destination.latitude);
-        intent.putExtra(SetDestinationHandler.KEY_LONGITUDE, destination.longitude);
-        context.startService(intent);
-    }
-
-    private class SetDestinationHandler extends IntentHandler {
+    public static class SetDestinationHandler extends ActionHandler {
 
         public static final String ACTION = "set_dest";
         public static final String KEY_LATITUDE = "dest_latitude";
         public static final String KEY_LONGITUDE = "dest_longitude";
 
         @Override
-        public boolean handle(Intent intent) {
+        public String getAction() {
+            return ACTION;
+        }
+
+        public static class Invoker {
+            public void invoke(Context context, Position destination) {
+                Intent intent = new Intent(context, GuidingService.class);
+                intent.setAction(SetDestinationHandler.ACTION);
+                intent.putExtra(SetDestinationHandler.KEY_LATITUDE, destination.latitude);
+                intent.putExtra(SetDestinationHandler.KEY_LONGITUDE, destination.longitude);
+                context.startService(intent);
+            }
+        }
+
+        protected final GuidingService state;
+
+        public SetDestinationHandler(GuidingService state) {
+            this.state = state;
+        }
+
+        @Override
+        public boolean handleSticky(Context context, Intent intent) {
 
             Bundle bundle = intent.getExtras();
             if (!bundle.containsKey(KEY_LATITUDE)) { return false; }
@@ -241,9 +226,12 @@ public class GuidingService extends Service {
 
             double latitude = bundle.getDouble(KEY_LATITUDE);
             double longitude = bundle.getDouble(KEY_LONGITUDE);
-            destination = new Position(latitude, longitude);
+            state.destination = new Position(latitude, longitude);
 
-            updator.start();
+            state.updator.start();
+
+            Notification notification = state.buildForegroundNotification();
+            state.startForeground(101, notification);
 
             return true;
 
@@ -251,22 +239,45 @@ public class GuidingService extends Service {
     }
 
 
-    public static void clearDestination() {
-        Context context = VelibApplication.getCachedAppContext();
-        Intent intent = new Intent(context, GuidingService.class);
-        intent.setAction(ClearDestinationHandler.ACTION);
-        context.startService(intent);
-    }
 
-    private class ClearDestinationHandler extends IntentHandler {
+    public static final ClearDestinationHandler.Invoker clearDestinationAction = new ClearDestinationHandler.Invoker();
+
+    public static class ClearDestinationHandler extends ActionHandler {
 
         public static final String ACTION = "clear_dest";
 
         @Override
-        public boolean handle(Intent intent) {
+        public String getAction() {
+            return ACTION;
+        }
 
-            destination = null;
-            updator.stop();
+        public static class Invoker {
+
+            public void invoke(Context context) {
+                Intent intent = new Intent(context, GuidingService.class);
+                intent.setAction(ACTION);
+                context.startService(intent);
+            }
+
+            public PendingIntent getPendingIntent(Context context) {
+                Intent intent = new Intent(context, GuidingService.class);
+                intent.setAction(ACTION);
+                return PendingIntent.getService(context, 0, intent, 0);
+            }
+
+        }
+
+        protected final GuidingService state;
+
+        public ClearDestinationHandler(GuidingService state) {
+            this.state = state;
+        }
+
+        @Override
+        public boolean handleSticky(Context context, Intent intent) {
+
+            state.destination = null;
+            state.updator.stop();
 
             return false;
         }

@@ -1,8 +1,8 @@
 package com.mortendahl.velib;
 
-import android.app.Application;
 import android.content.Context;
 
+import com.mortendahl.velib.library.BaseApplication;
 import com.mortendahl.velib.network.jcdecaux.StationListRequest;
 import com.mortendahl.velib.network.jcdecaux.VelibStation;
 import com.mortendahl.velib.service.AsyncTaskRestRequest;
@@ -19,7 +19,7 @@ import java.util.LinkedHashSet;
 
 import de.greenrobot.event.EventBus;
 
-public class VelibApplication extends Application {
+public class VelibApplication extends BaseApplication {
 
 	public static LinkedHashSet<Integer> monitoredVelibStation = new LinkedHashSet<Integer>();
 
@@ -81,7 +81,9 @@ public class VelibApplication extends Application {
     public void onCreate() {
 		super.onCreate();
 		cachedAppContext = getApplicationContext();
-		initServiceLayer();
+
+        PrefHelper.configure(cachedAppContext);
+        ServerConnection.configure(cachedAppContext);
 	}
 	
 	private static Context cachedAppContext = null;
@@ -90,8 +92,4 @@ public class VelibApplication extends Application {
 		return cachedAppContext;
 	}
 
-	private void initServiceLayer() {
-		ServerConnection.configure(getCachedAppContext());
-	}
-	
 }

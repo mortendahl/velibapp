@@ -2,6 +2,8 @@
 <resources>
 
     <color name="station_icon_stands_available_none">#ff5e9f</color>
-    <color name="station_icon_stands_available_some">#c0ff73</color>
+    <color name="station_icon_stands_available_few">#fff59e</color>
+    <color name="station_icon_stands_available_plenty">#c0ff73</color>
+    <color name="station_icon_closed">#555</color>
 	
 </resources>

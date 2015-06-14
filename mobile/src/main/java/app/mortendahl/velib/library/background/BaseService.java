@@ -6,6 +6,8 @@ import android.os.IBinder;
 
 import java.util.HashMap;
 
+import app.mortendahl.velib.Logger;
+
 public class BaseService extends Service {
 
     private HashMap<String, ActionHandler> actionMap;
@@ -15,6 +17,12 @@ public class BaseService extends Service {
         for (ActionHandler actionHandler : actionHandlers) {
             actionMap.put(actionHandler.getAction(), actionHandler);
         }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Logger.debug(Logger.TAG_SERVICE, this, "creating");
     }
 
     @Override
@@ -36,11 +44,17 @@ public class BaseService extends Service {
         }
 
         if (newKeepRunning != null && keepRunning != newKeepRunning) {
-            onKeepRunningChanged(newKeepRunning);
             keepRunning = newKeepRunning;
+//            onKeepRunningChanged(keepRunning);
+            if (keepRunning) {
+                onEnteringSticky();
+            } else {
+                onLeavingSticky();
+            }
         }
 
         if (!keepRunning) {
+            Logger.debug(Logger.TAG_SERVICE, this, "stopping");
             stopForeground(true);
             stopSelf();
         }
@@ -48,6 +62,10 @@ public class BaseService extends Service {
         return keepRunning ? START_STICKY : START_NOT_STICKY;
     }
 
-    protected void onKeepRunningChanged(boolean keepRunning) {}
+//    protected void onKeepRunningChanged(boolean keepRunning) {}
+
+    protected void onEnteringSticky() {}
+
+    protected void onLeavingSticky() {}
 
 }

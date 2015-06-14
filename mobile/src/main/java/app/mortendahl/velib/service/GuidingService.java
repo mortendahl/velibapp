@@ -6,8 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
@@ -26,7 +26,6 @@ import de.greenrobot.event.EventBus;
 public class GuidingService extends BaseService {
 
     private EventBusListener eventBusListener = new EventBusListener();
-//    protected Updator updator;
 
     public GuidingService() {
         setActionHandlers(
@@ -36,42 +35,35 @@ public class GuidingService extends BaseService {
     }
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-//        updator = new Updator();
+    protected void onEnteringSticky() {
+        Logger.debug(Logger.TAG_SERVICE, this, "onEnteringSticky");
+        if (!EventBus.getDefault().isRegistered(eventBusListener)) { EventBus.getDefault().register(eventBusListener); }
     }
 
     @Override
-    protected void onKeepRunningChanged(boolean keepRunning) {
-        if (keepRunning) {
-            if (!EventBus.getDefault().isRegistered(eventBusListener)) { EventBus.getDefault().register(eventBusListener); }
-
-        } else {
-            EventBus.getDefault().unregister(eventBusListener);
-
-        }
+    protected void onLeavingSticky() {
+        Logger.debug(Logger.TAG_SERVICE, this, "onLeavingSticky");
+        EventBus.getDefault().unregister(eventBusListener);
     }
 
-    protected Notification buildForegroundNotification() {
+    protected Notification buildForegroundNotification(VelibStation station) {
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.setAction(Intent.ACTION_MAIN);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setAction(Intent.ACTION_MAIN);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
         PendingIntent stopPendingIntent = clearDestinationAction.getPendingIntent(this);
 
         Notification notification;
 
-        VelibStation station = (destination != null ? getBestStationForDestination() : null);
-
         if (station != null) {
 
             notification = new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle("Guiding")
                     .setTicker("Guiding")
                     .setContentText("" + station.name + "\n" + station.availableStands)
-                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentIntent(pendingIntent)
                     .setOngoing(true)
                     .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
@@ -80,10 +72,10 @@ public class GuidingService extends BaseService {
         } else {
 
             notification = new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentTitle("Guiding")
                     .setTicker("Guiding")
                     .setContentText("Could not find best destination station")
-                    .setSmallIcon(R.mipmap.ic_launcher)
                     .setContentIntent(pendingIntent)
                     .setOngoing(true)
                     .build();
@@ -94,6 +86,22 @@ public class GuidingService extends BaseService {
 
     }
 
+    protected Notification buildNewBestStationNotification(VelibStation bestStation) {
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setAction(Intent.ACTION_VIEW);
+        PendingIntent viewPendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("New best station")
+                .setContentText(bestStation.name)
+                .setContentIntent(viewPendingIntent)
+                .addAction(android.R.drawable.ic_menu_compass, "Map", viewPendingIntent);
+
+        return notificationBuilder.build();
+
+    }
 
     protected VelibStation getBestStationForDestination() {
 
@@ -132,42 +140,25 @@ public class GuidingService extends BaseService {
 
 
 
-
-
-    protected class Updator implements Runnable {
-
-        private final Handler handler;
-
-        public Updator() {
-            handler = new Handler();
-        }
-
-        public void start() {
-            handler.postDelayed(this, 0);
-        }
-
-        public void stop() {
-            handler.removeCallbacks(this);
-        }
-
-        @Override
-        public void run() {
-            VelibApplication.reloadStations();
-            handler.postDelayed(this, 5000);
-        }
-
-    }
-
+    protected Integer previousBestStation = null;
 
     private class EventBusListener {
 
         public void onEvent(VelibStationUpdatedEvent event) {
             Logger.debug(Logger.TAG_GUI, this, event.getClass().getSimpleName());
+            if (destination == null) { return; }
 
-            if (destination != null) {
-                Notification notification = buildForegroundNotification();
-                startForeground(101, notification);
+            VelibStation bestStation = getBestStationForDestination();
+
+            Notification foregroundNotification = buildForegroundNotification(bestStation);
+            startForeground(101, foregroundNotification);
+
+            if (previousBestStation != null && previousBestStation != bestStation.number) {
+                Notification newBestStationNotification = buildNewBestStationNotification(bestStation);
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+                notificationManager.notify(202, newBestStationNotification);
             }
+            previousBestStation = bestStation.number;
 
         }
 
@@ -224,9 +215,10 @@ public class GuidingService extends BaseService {
             double longitude = bundle.getDouble(KEY_LONGITUDE);
             state.destination = new Position(latitude, longitude);
 
-            StationUpdatorService.updatesAction.request(context);
+            StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
 
-            Notification notification = state.buildForegroundNotification();
+            VelibStation station = state.getBestStationForDestination();
+            Notification notification = state.buildForegroundNotification(station);
             state.startForeground(101, notification);
 
             return true;
@@ -273,7 +265,7 @@ public class GuidingService extends BaseService {
         public Boolean handleSticky(Context context, Intent intent) {
 
             state.destination = null;
-            StationUpdatorService.updatesAction.remove(context);
+            StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
 
             return false;
         }

@@ -55,14 +55,14 @@ public class MapsFragment extends SupportMapFragment {
     @Override
     public void onResume() {
         super.onResume();
-        StationUpdatorService.updatesAction.request(getActivity());
+        StationUpdatorService.updatesAction.request(getActivity(), getClass().getSimpleName());
         EventBus.getDefault().register(eventBusListener);
     }
 
     @Override
     public void onPause() {
         super.onResume();
-        StationUpdatorService.updatesAction.remove(getActivity());
+        StationUpdatorService.updatesAction.remove(getActivity(), getClass().getSimpleName());
         EventBus.getDefault().unregister(eventBusListener);
     }
 

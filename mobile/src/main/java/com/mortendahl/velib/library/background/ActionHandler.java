@@ -1,4 +1,4 @@
-package com.mortendahl.velib.library;
+package com.mortendahl.velib.library.background;
 
 import android.content.Context;
 import android.content.Intent;
@@ -7,7 +7,7 @@ public abstract class ActionHandler {
 
     public abstract String getAction();
 
-    public boolean handleSticky(Context context, Intent intent) {
+    public Boolean handleSticky(Context context, Intent intent) {
         handle(context, intent);
         return false;
     }

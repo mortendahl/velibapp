@@ -1,4 +1,4 @@
-package com.mortendahl.velib.contextaware.location;
+package com.mortendahl.velib.library.contextaware.location;
 
 
 import android.location.Location;

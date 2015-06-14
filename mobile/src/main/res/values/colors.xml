@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="station_icon_stands_available_none">#ff5e9f</color>
+    <color name="station_icon_stands_available_some">#c0ff73</color>
+	
+</resources>

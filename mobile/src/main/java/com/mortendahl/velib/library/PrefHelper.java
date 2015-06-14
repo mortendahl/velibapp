@@ -1,4 +1,4 @@
-package com.mortendahl.velib;
+package com.mortendahl.velib.library;
 
 import android.content.Context;
 import android.content.SharedPreferences;

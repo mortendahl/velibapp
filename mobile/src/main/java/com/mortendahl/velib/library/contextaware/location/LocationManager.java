@@ -1,4 +1,4 @@
-package com.mortendahl.velib.contextaware.location;
+package com.mortendahl.velib.library.contextaware.location;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -10,7 +10,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.mortendahl.velib.library.*;
+import com.mortendahl.velib.library.background.ActionHandler;
+import com.mortendahl.velib.library.background.BaseIntentService;
 
 import java.util.concurrent.TimeUnit;
 

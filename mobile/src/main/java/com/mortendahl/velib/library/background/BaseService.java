@@ -1,7 +1,6 @@
-package com.mortendahl.velib.library;
+package com.mortendahl.velib.library.background;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 
@@ -23,30 +22,32 @@ public class BaseService extends Service {
         return null;
     }
 
+    private boolean keepRunning = false;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        boolean keepRunning = false;
+        Boolean newKeepRunning = null;
 
         String action = (intent != null ? intent.getAction() : null);
         if (action != null) {
             ActionHandler handler = actionMap.get(action);
-            keepRunning = handler.handleSticky(this, intent);
+            newKeepRunning = handler.handleSticky(this, intent);
         }
 
-        onIntentHandled(keepRunning);
+        if (newKeepRunning != null && keepRunning != newKeepRunning) {
+            onKeepRunningChanged(newKeepRunning);
+            keepRunning = newKeepRunning;
+        }
 
-        if (keepRunning) {
-            return START_STICKY;
-
-        } else {
+        if (!keepRunning) {
             stopForeground(true);
             stopSelf();
-            return START_NOT_STICKY;
-
         }
+
+        return keepRunning ? START_STICKY : START_NOT_STICKY;
     }
 
-    protected void onIntentHandled(boolean keepRunning) {}
+    protected void onKeepRunningChanged(boolean keepRunning) {}
 
 }

@@ -2,17 +2,15 @@ package com.mortendahl.velib.service;
 
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 
-import com.mortendahl.velib.library.ActionHandler;
-import com.mortendahl.velib.library.BaseService;
+import com.mortendahl.velib.library.background.ActionHandler;
+import com.mortendahl.velib.library.background.BaseService;
 import com.mortendahl.velib.network.jcdecaux.Position;
 import com.mortendahl.velib.Logger;
 import com.mortendahl.velib.R;
@@ -22,14 +20,13 @@ import com.mortendahl.velib.ui.MainActivity;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 
 import de.greenrobot.event.EventBus;
 
 public class GuidingService extends BaseService {
 
     private EventBusListener eventBusListener = new EventBusListener();
-    protected Updator updator;
+//    protected Updator updator;
 
     public GuidingService() {
         setActionHandlers(
@@ -41,17 +38,16 @@ public class GuidingService extends BaseService {
     @Override
     public void onCreate() {
         super.onCreate();
-        updator = new Updator();
+//        updator = new Updator();
     }
 
     @Override
-    protected void onIntentHandled(boolean keepRunning) {
+    protected void onKeepRunningChanged(boolean keepRunning) {
         if (keepRunning) {
             if (!EventBus.getDefault().isRegistered(eventBusListener)) { EventBus.getDefault().register(eventBusListener); }
 
         } else {
             EventBus.getDefault().unregister(eventBusListener);
-            stopForeground(true);
 
         }
     }
@@ -218,17 +214,17 @@ public class GuidingService extends BaseService {
         }
 
         @Override
-        public boolean handleSticky(Context context, Intent intent) {
+        public Boolean handleSticky(Context context, Intent intent) {
 
             Bundle bundle = intent.getExtras();
-            if (!bundle.containsKey(KEY_LATITUDE)) { return false; }
-            if (!bundle.containsKey(KEY_LONGITUDE)) { return false; }
+            if (!bundle.containsKey(KEY_LATITUDE)) { return null; }
+            if (!bundle.containsKey(KEY_LONGITUDE)) { return null; }
 
             double latitude = bundle.getDouble(KEY_LATITUDE);
             double longitude = bundle.getDouble(KEY_LONGITUDE);
             state.destination = new Position(latitude, longitude);
 
-            state.updator.start();
+            StationUpdatorService.updatesAction.request(context);
 
             Notification notification = state.buildForegroundNotification();
             state.startForeground(101, notification);
@@ -274,10 +270,10 @@ public class GuidingService extends BaseService {
         }
 
         @Override
-        public boolean handleSticky(Context context, Intent intent) {
+        public Boolean handleSticky(Context context, Intent intent) {
 
             state.destination = null;
-            state.updator.stop();
+            StationUpdatorService.updatesAction.remove(context);
 
             return false;
         }

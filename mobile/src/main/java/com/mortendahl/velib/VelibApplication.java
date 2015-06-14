@@ -1,8 +1,11 @@
 package com.mortendahl.velib;
 
+import android.app.usage.UsageEvents;
 import android.content.Context;
 
-import com.mortendahl.velib.library.BaseApplication;
+import com.mortendahl.velib.library.background.BaseApplication;
+import com.mortendahl.velib.library.PrefHelper;
+import com.mortendahl.velib.library.ui.UiHelper;
 import com.mortendahl.velib.network.jcdecaux.StationListRequest;
 import com.mortendahl.velib.network.jcdecaux.VelibStation;
 import com.mortendahl.velib.service.AsyncTaskRestRequest;
@@ -82,9 +85,22 @@ public class VelibApplication extends BaseApplication {
 		super.onCreate();
 		cachedAppContext = getApplicationContext();
 
+        // setup system
         PrefHelper.configure(cachedAppContext);
         ServerConnection.configure(cachedAppContext);
+
+        // log all bus events
+        EventBus.getDefault().register(new EventBusDebugger());
 	}
+
+    private class EventBusDebugger {
+
+        // using Object captures all events
+        public void onEvent(Object event) {
+            Logger.debug(Logger.TAG_SYSTEM, this, "onEvent, " + event.toString());
+        }
+
+    }
 	
 	private static Context cachedAppContext = null;
 	

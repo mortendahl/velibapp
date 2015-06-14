@@ -1,5 +1,6 @@
 package com.mortendahl.velib.ui.map;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -11,12 +12,18 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import com.mortendahl.velib.Logger;
+import com.mortendahl.velib.R;
 import com.mortendahl.velib.VelibApplication;
+import com.mortendahl.velib.library.ui.BitmapHelper;
 import com.mortendahl.velib.network.jcdecaux.Position;
 import com.mortendahl.velib.network.jcdecaux.VelibStation;
 import com.mortendahl.velib.service.GuidingService;
+import com.mortendahl.velib.service.StationUpdatorService;
+import com.mortendahl.velib.service.VelibStationUpdatedEvent;
 import com.mortendahl.velib.service.VelibStationsChangedEvent;
 
 import java.util.Collection;
@@ -48,19 +55,24 @@ public class MapsFragment extends SupportMapFragment {
     @Override
     public void onResume() {
         super.onResume();
-        reloadStationMarkers();
+        StationUpdatorService.updatesAction.request(getActivity());
         EventBus.getDefault().register(eventBusListener);
     }
 
     @Override
     public void onPause() {
         super.onResume();
+        StationUpdatorService.updatesAction.remove(getActivity());
         EventBus.getDefault().unregister(eventBusListener);
     }
 
     private class EventBusListener {
 
         public void onEvent(VelibStationsChangedEvent event) {
+            reloadStationMarkers();
+        }
+
+        public void onEvent(VelibStationUpdatedEvent event) {
             reloadStationMarkers();
         }
 
@@ -104,29 +116,92 @@ public class MapsFragment extends SupportMapFragment {
         }
     }
 
+    private class VelibStationRenderer extends DefaultClusterRenderer<VelibStationMapItem> {
+
+        public final BitmapDescriptor someStandsAvailableStationIcon;
+        public final BitmapDescriptor noneStandsAvailableStationIcon;
+
+        public VelibStationRenderer(GoogleMap map, ClusterManager clusterManager) {
+            super(getActivity(), map, clusterManager);
+
+            someStandsAvailableStationIcon = createStationIcon(getResources().getColor(R.color.station_icon_stands_available_some));
+            noneStandsAvailableStationIcon = createStationIcon(getResources().getColor(R.color.station_icon_stands_available_none));
+        }
+
+        private BitmapDescriptor createStationIcon(int color) {
+            Bitmap icon;
+            //icon = BitmapHelper.createTextBitmap(100, color, text);
+            icon = BitmapHelper.createSolidBitmap(100, color);
+            icon = BitmapHelper.cropBitmapToCircle(icon);
+            return BitmapDescriptorFactory.fromBitmap(icon);
+        }
+
+        @Override
+        protected void onBeforeClusterItemRendered(VelibStationMapItem mapItem, MarkerOptions markerOptions) {
+
+            // doesnt not refresh properly; seems we really need to re-add all markers
+            //VelibStation velibStation = VelibApplication.stationsMap.get(mapItem.number);
+          //int availableStands = (velibStation != null ? velibStation.availableStands : -1);
+
+            //String text = String.format("%d", mapItem.availableStands);
+
+            markerOptions
+                    .icon(mapItem.availableStands > 0 ? someStandsAvailableStationIcon : noneStandsAvailableStationIcon)
+                    .title(mapItem.name + "\n" + mapItem.availableStands);
+        }
+
+        @Override
+        protected boolean shouldRenderAsCluster(Cluster<VelibStationMapItem> cluster) {
+            return cluster.getSize() > 10;
+        }
+
+    }
+
+    protected VelibStationRenderer renderer;
+
+    private long previousReloadTimestamp = 0;
+
     protected void reloadStationMarkers() {
 
         GoogleMap map = getMap();
         if (map == null) { return; }
 
+        long currentTimestamp = System.currentTimeMillis();
+
         if (clusterManager == null) {
             clusterManager = new ClusterManager<>(getActivity(), map);
+            renderer = new VelibStationRenderer(map, clusterManager);
+            clusterManager.setRenderer(renderer);
             map.setOnCameraChangeListener(clusterManager);
             map.setOnMarkerClickListener(clusterManager);
             clusterManager.setOnClusterItemClickListener(mapListener);
-
             map.setOnMapLongClickListener(mapListener);
             map.setOnMapClickListener(mapListener);
+        } else {
+
+            if (currentTimestamp - previousReloadTimestamp < 10000) {
+                Logger.debug(Logger.TAG_GUI, this, "reloadStationMarkers, skipping");
+                return;
+            }
+
         }
 
-        clusterManager.clearItems();
 
+        Logger.debug(Logger.TAG_GUI, this, "reloadStationMarkers");
+
+        clusterManager.clearItems();
         Collection<VelibStation> stations = VelibApplication.stationsMap.values();
         if (stations.isEmpty()) { return; }
+
+        previousReloadTimestamp = currentTimestamp;
 
         for (VelibStation station : stations) {
             clusterManager.addItem(VelibStationMapItem.fromStation(station));
         }
+        // force refresh
+        clusterManager.cluster();
+
+
 
         if (zoomMapToMarkers) {
 

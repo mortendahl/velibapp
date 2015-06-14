@@ -38,11 +38,16 @@
             android:exported="true" />
 
         <service
-            android:name=".contextaware.location.LocationManager"
+            android:name=".service.StationUpdatorService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <service
+            android:name=".library.contextaware.location.LocationManager"
             android:exported="false" />
 
         <receiver
-            android:name=".contextaware.location.LocationReceiver"
+            android:name=".library.contextaware.location.LocationReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

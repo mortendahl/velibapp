@@ -1,4 +1,4 @@
-package com.mortendahl.velib.contextaware.location;
+package com.mortendahl.velib.library.contextaware.location;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -6,8 +6,8 @@ import android.content.Intent;
 import android.location.Location;
 
 import com.google.android.gms.location.FusedLocationProviderApi;
-import com.mortendahl.velib.library.ActionHandler;
-import com.mortendahl.velib.library.BaseBroadcastReceiver;
+import com.mortendahl.velib.library.background.ActionHandler;
+import com.mortendahl.velib.library.background.BaseBroadcastReceiver;
 
 import de.greenrobot.event.EventBus;
 

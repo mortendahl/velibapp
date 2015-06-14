@@ -1,4 +1,4 @@
-package com.mortendahl.velib.library;
+package com.mortendahl.velib.library.background;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

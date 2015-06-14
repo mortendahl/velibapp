@@ -1,4 +1,4 @@
-package com.mortendahl.velib;
+package com.mortendahl.velib.library.ui;
 
 import android.app.Activity;
 import android.app.Notification;
@@ -10,6 +10,9 @@ import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Vibrator;
 import android.widget.Toast;
+
+import com.mortendahl.velib.R;
+import com.mortendahl.velib.VelibApplication;
 
 public final class UiHelper {
 	

@@ -5,6 +5,7 @@ import android.util.Log;
 
 public final class Logger {
 
+	public static final String TAG_SYSTEM	= "VelibSystem";
 	public static final String TAG_REST		= "VelibRest";
 	public static final String TAG_GUI		= "VelibGui";
 	public static final String TAG_SERVICE  = "VelibService";

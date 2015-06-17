@@ -13,7 +13,6 @@ import com.google.android.gms.location.DetectedActivity;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
-import app.mortendahl.velib.library.eventbus.BaseEvent;
 import app.mortendahl.velib.library.eventbus.EventStore;
 import app.mortendahl.velib.ui.MainActivity;
 import de.greenrobot.event.EventBus;
@@ -69,7 +68,7 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
             int type = detectedActivity.getType();
             int confidence = detectedActivity.getConfidence();
             if (type == DetectedActivity.ON_BICYCLE
-                && confidence > (previousBikingActivity == null ? previousBikingActivity.getConfidence() : 0)) {
+                && confidence > (previousBikingActivity != null ? previousBikingActivity.getConfidence() : 0)) {
 
                 previousBikingActivity = detectedActivity;
 
@@ -83,7 +82,7 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
 
             }
 
-            ActivityEvent event = new ActivityEvent(detectedActivity);
+            ActivityEvent event = ActivityEvent.fromPlayActivity(detectedActivity);
             EventStore.storeEvent(event);
             EventBus.getDefault().post(event);
 

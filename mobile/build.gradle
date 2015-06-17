@@ -1,4 +1,9 @@
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+
+repositories {
+    maven { url 'https://maven.fabric.io/public' }
+}
 
 android {
 
@@ -77,4 +82,7 @@ dependencies {
     compile 'com.google.maps.android:android-maps-utils:0.3+'
 
     compile 'de.greenrobot:eventbus:2.4.0'
+    compile('com.crashlytics.sdk.android:crashlytics:2.3.2@aar') {
+        transitive = true;
+    }
 }

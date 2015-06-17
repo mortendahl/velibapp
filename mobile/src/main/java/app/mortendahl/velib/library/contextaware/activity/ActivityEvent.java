@@ -12,11 +12,13 @@ public class ActivityEvent extends BaseEvent {
     public int type;
     public int confidence;
 
-    public ActivityEvent() {}
+    private ActivityEvent() {}
 
-    public ActivityEvent(DetectedActivity activity) {
-        this.type = activity.getType();
-        this.confidence = activity.getConfidence();
+    public static ActivityEvent fromPlayActivity(DetectedActivity activity) {
+        ActivityEvent event = new ActivityEvent();
+        event.type = activity.getType();
+        event.confidence = activity.getConfidence();
+        return event;
     }
 
     @Override
@@ -27,7 +29,7 @@ public class ActivityEvent extends BaseEvent {
     @Override
     public JSONObject toJson() throws JSONException {
         JSONObject json = super.toJson();
-        json.put("type", type);
+        json.put("type", describeActivityType(type));
         json.put("confidence", confidence);
         return json;
     }
@@ -51,7 +53,7 @@ public class ActivityEvent extends BaseEvent {
             case DetectedActivity.WALKING:
                 return "walking";
         }
-        return "other";
+        return String.format("other(%d)", type);
     }
 
 }

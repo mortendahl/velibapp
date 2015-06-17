@@ -16,6 +16,8 @@ import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
 import app.mortendahl.velib.service.VelibStationUpdatedEvent;
 import app.mortendahl.velib.service.VelibStationsChangedEvent;
 
+import com.crashlytics.android.Crashlytics;
+import io.fabric.sdk.android.Fabric;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -83,7 +85,11 @@ public class VelibApplication extends BaseApplication {
 	@Override
     public void onCreate() {
 		super.onCreate();
+
 		cachedAppContext = getApplicationContext();
+
+		// setup Crashlytics
+		Fabric.with(this, new Crashlytics());
 
         // setup system
         PrefHelper.configure(cachedAppContext);
@@ -92,6 +98,7 @@ public class VelibApplication extends BaseApplication {
 
         // log all bus events
         EventBus.getDefault().register(new EventBusDebugger());
+
 	}
 
     private class EventBusDebugger {

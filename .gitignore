@@ -6,6 +6,7 @@
 /build
 /captures
 
+fabric.properties
 api_keys.xml
 /mobile/src/debug/AndroidManifest.xml
 /wear/src/debug/AndroidManifest.xml

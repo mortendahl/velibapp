@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Velib Watch</string>
+    <string name="intro_text">Long click to exit the map.</string>
+
     <string name="hello_round">Hello Round World!</string>
     <string name="hello_square">Hello Square World!</string>
 </resources>

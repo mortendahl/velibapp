@@ -9,17 +9,10 @@ import com.google.android.gms.location.FusedLocationProviderApi;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
 
+import app.mortendahl.velib.library.eventbus.EventStore;
 import de.greenrobot.event.EventBus;
 
 public class LocationReceiver extends BaseBroadcastReceiver {
-
-    protected static final String ACTION_LOCATION_UPDATE = "location_update";
-
-    protected static PendingIntent getLocationUpdatePendingIntent(Context context) {
-        Intent intent = new Intent(LocationReceiver.ACTION_LOCATION_UPDATE, null, context, LocationReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        return pendingIntent;
-    }
 
     public LocationReceiver() {
         setActionHandlers(
@@ -28,7 +21,7 @@ public class LocationReceiver extends BaseBroadcastReceiver {
         );
     }
 
-    public static class BootActionHandler extends ActionHandler {
+    private static class BootActionHandler extends ActionHandler {
 
         @Override
         public String getAction() {
@@ -45,19 +38,29 @@ public class LocationReceiver extends BaseBroadcastReceiver {
 
     public static class LocationUpdateHandler extends ActionHandler {
 
+        private static final String ACTION = "location_update";
+
+        public static PendingIntent getPendingIntent(Context context) {
+            Intent intent = new Intent(ACTION, null, context, LocationReceiver.class);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            return pendingIntent;
+        }
+
         @Override
         public String getAction() {
-            return ACTION_LOCATION_UPDATE;
+            return ACTION;
         }
 
         @Override
         public void handle(Context context, Intent intent) {
             Location location = (Location) intent.getExtras().get(FusedLocationProviderApi.KEY_LOCATION_CHANGED);
-            EventBus.getDefault().post(new LocationUpdatedEvent(location));
+            if (location == null) { return; }
+
+            LocationUpdatedEvent event = new LocationUpdatedEvent(location);
+            EventStore.storeEvent(event);
+            EventBus.getDefault().post(event);
         }
 
     }
-
-
 
 }

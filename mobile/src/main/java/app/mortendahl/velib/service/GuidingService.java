@@ -11,6 +11,7 @@ import android.support.v4.app.NotificationManagerCompat;
 
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
+import app.mortendahl.velib.library.eventbus.EventStore;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
@@ -142,6 +143,12 @@ public class GuidingService extends BaseService {
 
     protected Integer previousBestStation = null;
 
+    /*** NOTE ***
+     * the event bus listener is only receiving events while the service is started;
+     * once stopped no events will be delivered anymore (since the state of a stopped
+     * service is not consistent). As a result, any event that should start the service
+     * must be sent through the intent pipeline, and NOT through the event bus.
+     */
     private class EventBusListener {
 
         public void onEvent(VelibStationUpdatedEvent event) {
@@ -213,13 +220,18 @@ public class GuidingService extends BaseService {
 
             double latitude = bundle.getDouble(KEY_LATITUDE);
             double longitude = bundle.getDouble(KEY_LONGITUDE);
-            state.destination = new Position(latitude, longitude);
+            Position destination = new Position(latitude, longitude);
+            state.destination = destination;
 
             StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
 
             VelibStation station = state.getBestStationForDestination();
             Notification notification = state.buildForegroundNotification(station);
             state.startForeground(101, notification);
+
+            SetDestinationEvent event = new SetDestinationEvent(destination);
+            EventStore.storeEvent(event);
+            EventBus.getDefault().post(event);
 
             return true;
 
@@ -266,6 +278,10 @@ public class GuidingService extends BaseService {
 
             state.destination = null;
             StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
+
+            ClearDestinationEvent event = new ClearDestinationEvent();
+            EventStore.storeEvent(event);
+            EventBus.getDefault().post(event);
 
             return false;
         }

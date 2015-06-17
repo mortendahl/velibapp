@@ -56,7 +56,7 @@ public class StationUpdatorService extends BaseService {
         @Override
         public void run() {
             VelibApplication.reloadStations();
-            handler.postDelayed(this, 5000);
+            handler.postDelayed(this, 15000);
         }
 
     }

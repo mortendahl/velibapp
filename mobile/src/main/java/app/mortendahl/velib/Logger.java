@@ -70,6 +70,7 @@ public final class Logger {
 	public static void debug(String tag, String namedCaller, String message) {
 		Log.d(tag, format(namedCaller, message));
 	}
+
 	
 	public static void error(String tag, Class<?> staticCaller, String message) {
 		Log.e(tag, format(staticCaller, message));
@@ -82,6 +83,7 @@ public final class Logger {
 	public static void error(String tag, String namedCaller, String message) {
 		Log.e(tag, format(namedCaller, message));
 	}
+
 	
 	public static void warn(String tag, Class<?> staticCaller, String message) {
 		Log.w(tag, format(staticCaller, message));
@@ -94,6 +96,7 @@ public final class Logger {
 	public static void warn(String tag, String namedCaller, String message) {
 		Log.w(tag, format(namedCaller, message));
 	}
+
 	
 	public static void info(String tag, Class<?> staticCaller, String message) {
 		Log.i(tag, format(staticCaller, message));

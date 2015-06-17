@@ -86,10 +86,10 @@ public class LocationManager extends BaseIntentService {
         }
 
         public static class Invoker {
-            public void setInterval(Context context, int interval) {
+            public void setInterval(Context context, int intervalInSeconds) {
                 Intent intent = new Intent(context, LocationManager.class);
                 intent.setAction(ACTION);
-                intent.putExtra(KEY_INTERVAL, interval);
+                intent.putExtra(KEY_INTERVAL, intervalInSeconds);
                 context.startService(intent);
             }
 
@@ -107,27 +107,28 @@ public class LocationManager extends BaseIntentService {
         @Override
         public void handle(Context context, Intent intent) {
 
+            // either no-op if already connected or wait until new connection established
             state.googleApiClient.blockingConnect(10000, TimeUnit.MILLISECONDS);
 
-            int interval = intent.getIntExtra(KEY_INTERVAL, 0);
+            int intervalInSeconds = intent.getIntExtra(KEY_INTERVAL, 0);
 
             // todo checks could be improved
             if (!state.googleApiClient.isConnected()) { return; }
-            if (interval == 0) { return; }
+            if (intervalInSeconds == 0) { return; }
 
-            PendingIntent pendingIntent = LocationReceiver.getLocationUpdatePendingIntent(context);
+            PendingIntent pendingIntent = LocationReceiver.LocationUpdateHandler.getPendingIntent(context);
             Status status;
 
-            if (interval > 0) {
+            if (intervalInSeconds > 0) {
 
                 //
                 // request updates
                 //
 
                 LocationRequest locationRequest = LocationRequest.create()
-                        .setInterval(interval)
+                        .setInterval(intervalInSeconds * 1000)
                         .setFastestInterval(3000)
-                        .setMaxWaitTime(2 * interval)
+                        .setMaxWaitTime(2 * intervalInSeconds)
                         .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                         .setSmallestDisplacement(0);  // in meters
 
@@ -149,7 +150,12 @@ public class LocationManager extends BaseIntentService {
 
             if (status.isSuccess()) {
 
+                // TODO
+
             }
+
+            // TODO we could disconnect here
+            //state.googleApiClient.disconnect();
 
         }
 

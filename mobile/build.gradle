@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
+
     compileSdkVersion 22
     buildToolsVersion "22.0.1"
 
@@ -8,15 +9,62 @@ android {
         applicationId "app.mortendahl.velib"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 1
-        versionName "0.1"
+        versionCode 3
+        versionName "0.1.1"
     }
+
+    signingConfigs {
+        release {
+            storeFile file('../../mortendahlapp.keystore')
+            keyAlias 'google play release'
+            //storePassword ''    // never store password here! code below for asking at compile time
+            //keyPassword ''      // never store password here! code below for asking at compile time
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
+
+}
+
+def askAndSetSigningPassword() {
+
+    def password = null
+
+    // first: try command line
+    if (password == null) {
+        password = System.properties["keystorePassword"]
+    }
+
+    // second: try environment
+    if (password == null) {
+        password = System.getenv("keystorePassword")
+    }
+
+    // third: ask user
+    if (password == null) {
+        if (System.console() != null) {
+            // console available, use it to ask for password
+            password = new String(System.console().readPassword("\nEnter keystore password: "))
+        }
+    }
+
+    android.signingConfigs.release.storePassword = password
+    android.signingConfigs.release.keyPassword = password
+
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+
+    if (taskGraph.hasTask(':mobile:assembleRelease')) {
+        askAndSetSigningPassword()
+    }
+
 }
 
 dependencies {

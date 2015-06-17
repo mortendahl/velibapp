@@ -9,6 +9,7 @@
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -42,12 +43,50 @@
             android:enabled="true"
             android:exported="false" />
 
+
+        <!-- Library -->
+
         <service
             android:name=".library.contextaware.location.LocationManager"
             android:exported="false" />
 
         <receiver
             android:name=".library.contextaware.location.LocationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+
+        <service
+            android:name=".library.contextaware.geofence.GeofenceManager"
+            android:exported="false" />
+
+        <receiver
+            android:name=".library.contextaware.geofence.GeofenceReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+
+        <service
+            android:name=".library.contextaware.activity.ActivityManager"
+            android:exported="false" />
+
+        <receiver
+            android:name=".library.contextaware.activity.ActivityReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+
+        <receiver
+            android:name=".library.contextaware.connectivity.ConnectivityReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

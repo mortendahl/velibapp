@@ -4,6 +4,7 @@ import android.content.Context;
 
 import app.mortendahl.velib.library.background.BaseApplication;
 import app.mortendahl.velib.library.PrefHelper;
+import app.mortendahl.velib.library.eventbus.EventStore;
 import app.mortendahl.velib.library.ui.UiHelper;
 import app.mortendahl.velib.network.jcdecaux.StationListRequest;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
@@ -86,6 +87,7 @@ public class VelibApplication extends BaseApplication {
 
         // setup system
         PrefHelper.configure(cachedAppContext);
+        EventStore.configure(cachedAppContext);
         ServerConnection.configure(cachedAppContext);
 
         // log all bus events

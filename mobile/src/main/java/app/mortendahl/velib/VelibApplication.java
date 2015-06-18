@@ -6,6 +6,7 @@ import app.mortendahl.velib.library.background.BaseApplication;
 import app.mortendahl.velib.library.PrefHelper;
 import app.mortendahl.velib.library.eventbus.EventStore;
 import app.mortendahl.velib.library.ui.UiHelper;
+import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.network.jcdecaux.StationListRequest;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.service.AsyncTaskRestRequest;
@@ -25,6 +26,10 @@ import java.util.LinkedHashSet;
 import de.greenrobot.event.EventBus;
 
 public class VelibApplication extends BaseApplication {
+
+	public static Position POSITION_WORK = new Position(48.8672898, 2.3520185);
+	public static Position POSITION_GYM = new Position(48.866944, 2.366344);
+
 
 	public static LinkedHashSet<Integer> monitoredVelibStation = new LinkedHashSet<Integer>();
 
@@ -59,8 +64,13 @@ public class VelibApplication extends BaseApplication {
 
 	protected static StationListRequest request = null;
 
+	protected static void resetRequest() {
+		request = null;
+	}
+
 	public static void reloadStations() {
 
+		Logger.debug(Logger.TAG_SYSTEM, VelibApplication.class, "reloadStations" + (request!=null?", skipping" :""));
 		if (request != null) { return; }
 
 		request = new StationListRequest();
@@ -69,13 +79,15 @@ public class VelibApplication extends BaseApplication {
 
 			@Override
 			public void onError(RestRequest<?> request, Exception e) {
-				request = null;
+				resetRequest();
+				Logger.debug(Logger.TAG_SYSTEM, this, "reloadStations, onError, " + e.toString());
 			}
 
 			@Override
 			public void onResponse(StationListRequest.StationResponse response) {
+				resetRequest();
 				updateStations(response.stations);
-				request = null;
+				Logger.debug(Logger.TAG_SYSTEM, this, "reloadStations, onResponse");
 			}
 
 		}).execute();

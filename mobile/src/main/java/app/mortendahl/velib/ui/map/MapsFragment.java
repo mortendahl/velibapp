@@ -167,7 +167,7 @@ public class MapsFragment extends SupportMapFragment {
 
         @Override
         protected boolean shouldRenderAsCluster(Cluster<VelibStationMapItem> cluster) {
-            return cluster.getSize() >= 8;
+            return cluster.getSize() >= 4;
         }
 
     }

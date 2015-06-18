@@ -15,9 +15,11 @@ import com.google.android.gms.location.LocationServices;
 
 import java.util.concurrent.TimeUnit;
 
+import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
 import app.mortendahl.velib.library.contextaware.location.LocationReceiver;
+import app.mortendahl.velib.network.jcdecaux.Position;
 
 public class GeofenceManager extends BaseIntentService {
 
@@ -109,7 +111,8 @@ public class GeofenceManager extends BaseIntentService {
 
             final int radius = 100;  // min recommended by Google
 
-            installGeofence(context, "work", 48.8672898, 2.3520185, radius);
+            Position workPosition = VelibApplication.POSITION_WORK;
+            installGeofence(context, "work", workPosition.latitude, workPosition.longitude, radius);
 
         }
 

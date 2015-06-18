@@ -5,23 +5,24 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
 import app.mortendahl.velib.Logger;
-import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
+import app.mortendahl.velib.library.background.WakeLockManager;
 
 public class StationUpdatorService extends BaseService {
+
+    protected static WakeLockManager wakeLockManager = new WakeLockManager();
 
     protected Updator updator;
     protected LinkedHashSet<String> requester = new LinkedHashSet<>();
 
     public StationUpdatorService() {
         setActionHandlers(
-                new SetActiveHandler(this)
+                new SetActiveHandler.Handler(this)
         );
     }
 
@@ -33,24 +34,23 @@ public class StationUpdatorService extends BaseService {
 
     protected class Updator implements Runnable {
 
-        private final Handler handler;
+        private Handler handler = null;
         private boolean started = false;
 
-        public Updator() {
-            handler = new Handler();
-        }
+        public Updator() {}
 
         public void start() {
             if (started) { return; }
             started = true;
+            if (handler == null) { handler = new Handler(); }
             handler.postDelayed(this, 0);
-            Logger.debug(Logger.TAG_SERVICE, this, "started updator");
+            Logger.debug(Logger.TAG_SYSTEM, this, "started updator");
         }
 
         public void stop() {
             started = false;
             handler.removeCallbacks(this);
-            Logger.debug(Logger.TAG_SERVICE, this, "stopped updator");
+            Logger.debug(Logger.TAG_SYSTEM, this, "stopped updator");
         }
 
         @Override
@@ -64,7 +64,7 @@ public class StationUpdatorService extends BaseService {
 
     public static final SetActiveHandler.Invoker updatesAction = new SetActiveHandler.Invoker();
 
-    public static class SetActiveHandler extends ActionHandler {
+    public static class SetActiveHandler {
 
         public static final String ACTION = "set_active";
         public static final String KEY_TAG = "tag";
@@ -72,14 +72,12 @@ public class StationUpdatorService extends BaseService {
         protected static final int ACTION_REMOVE = 0;
         protected static final int ACTION_REQUEST = 1;
 
-        @Override
-        public String getAction() {
-            return ACTION;
-        }
-
         public static class Invoker {
             public void request(Context context, String tag) {
                 Logger.debug(Logger.TAG_SERVICE, this, "request, " + tag);
+
+                wakeLockManager.acquireWakeLock(context);
+
                 Intent intent = new Intent(context, StationUpdatorService.class);
                 intent.setAction(ACTION);
                 intent.putExtra(KEY_TAG, tag);
@@ -89,6 +87,9 @@ public class StationUpdatorService extends BaseService {
 
             public void remove(Context context, String tag) {
                 Logger.debug(Logger.TAG_SERVICE, this, "remove, " + tag);
+
+                wakeLockManager.acquireWakeLock(context);
+
                 Intent intent = new Intent(context, StationUpdatorService.class);
                 intent.setAction(ACTION);
                 intent.putExtra(KEY_TAG, tag);
@@ -97,37 +98,47 @@ public class StationUpdatorService extends BaseService {
             }
         }
 
-        protected final StationUpdatorService state;
+        public static class Handler extends ActionHandler {
 
-        public SetActiveHandler(StationUpdatorService state) {
-            this.state = state;
-        }
-
-
-        @Override
-        public Boolean handleSticky(Context context, Intent intent) {
-
-            Bundle bundle = intent.getExtras();
-            if (!bundle.containsKey(KEY_TAG)) { return null; }
-            if (!bundle.containsKey(KEY_ACTION)) { return null; }
-
-            String tag = bundle.getString(KEY_TAG);
-            int action = bundle.getInt(KEY_ACTION);
-
-            if (action == ACTION_REQUEST) {
-                state.requester.add(tag);
-            } else {
-                state.requester.remove(tag);
+            @Override
+            public String getAction() {
+                return ACTION;
             }
 
-            if (!state.requester.isEmpty()) {
-                state.updator.start();
-                return true;
-            } else {
-                state.updator.stop();
-                return false;
+            protected final StationUpdatorService state;
+
+            public Handler(StationUpdatorService state) {
+                this.state = state;
             }
+
+            @Override
+            public Boolean handleSticky(Context context, Intent intent) {
+
+                Bundle bundle = intent.getExtras();
+                if (!bundle.containsKey(KEY_TAG)) { throw new AssertionError("no KEY_TAG"); }
+                if (!bundle.containsKey(KEY_ACTION)) { throw new AssertionError("no KEY_ACTION"); }
+
+                String tag = bundle.getString(KEY_TAG);
+                int action = bundle.getInt(KEY_ACTION);
+
+                if (action == ACTION_REQUEST) {
+                    state.requester.add(tag);
+                } else {
+                    state.requester.remove(tag);
+                }
+
+                if (!state.requester.isEmpty()) {
+                    state.updator.start();
+                    return true;
+                } else {
+                    state.updator.stop();
+                    wakeLockManager.releaseWakelock();
+                    return false;
+                }
+            }
+
         }
+
     }
 
 }

@@ -49,12 +49,8 @@ public class GuidingService extends BaseService {
 
     protected Notification buildForegroundNotification(VelibStation station) {
 
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setAction(Intent.ACTION_MAIN);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-
-        PendingIntent stopPendingIntent = clearDestinationAction.getPendingIntent(this);
+        PendingIntent mainPendingIntent = MainActivity.getPendingIntent(this);
+        PendingIntent stopPendingIntent = GuidingService.clearDestinationAction.getPendingIntent(this);
 
         Notification notification;
 
@@ -65,7 +61,7 @@ public class GuidingService extends BaseService {
                     .setContentTitle("Guiding")
                     .setTicker("Guiding")
                     .setContentText("" + station.name + "\n" + station.availableStands)
-                    .setContentIntent(pendingIntent)
+                    .setContentIntent(mainPendingIntent)
                     .setOngoing(true)
                     .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
                     .build();
@@ -77,7 +73,7 @@ public class GuidingService extends BaseService {
                     .setContentTitle("Guiding")
                     .setTicker("Guiding")
                     .setContentText("Could not find best destination station")
-                    .setContentIntent(pendingIntent)
+                    .setContentIntent(mainPendingIntent)
                     .setOngoing(true)
                     .build();
 
@@ -91,14 +87,14 @@ public class GuidingService extends BaseService {
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
-        PendingIntent viewPendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        PendingIntent mapPendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("New best station")
                 .setContentText(bestStation.name)
-                .setContentIntent(viewPendingIntent)
-                .addAction(android.R.drawable.ic_menu_compass, "Map", viewPendingIntent);
+                .setContentIntent(mapPendingIntent)
+                .addAction(android.R.drawable.ic_menu_compass, "Map", mapPendingIntent);
 
         return notificationBuilder.build();
 
@@ -141,8 +137,6 @@ public class GuidingService extends BaseService {
 
 
 
-    protected Integer previousBestStation = null;
-
     /*** NOTE ***
      * the event bus listener is only receiving events while the service is started;
      * once stopped no events will be delivered anymore (since the state of a stopped
@@ -150,6 +144,8 @@ public class GuidingService extends BaseService {
      * must be sent through the intent pipeline, and NOT through the event bus.
      */
     private class EventBusListener {
+
+        private Integer previousBestStation = null;
 
         public void onEvent(VelibStationUpdatedEvent event) {
             Logger.debug(Logger.TAG_GUI, this, event.getClass().getSimpleName());
@@ -160,7 +156,7 @@ public class GuidingService extends BaseService {
             Notification foregroundNotification = buildForegroundNotification(bestStation);
             startForeground(101, foregroundNotification);
 
-            if (previousBestStation != null && previousBestStation != bestStation.number) {
+            if (previousBestStation == null || previousBestStation != bestStation.number) {
                 Notification newBestStationNotification = buildNewBestStationNotification(bestStation);
                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
                 notificationManager.notify(202, newBestStationNotification);
@@ -196,13 +192,25 @@ public class GuidingService extends BaseService {
         }
 
         public static class Invoker {
+
             public void invoke(Context context, Position destination) {
+                Intent intent = getIntent(context, destination);
+                context.startService(intent);
+            }
+
+            public PendingIntent getPendingIntent(Context context, Position destination) {
+                Intent intent = getIntent(context, destination);
+                return PendingIntent.getService(context, 0, intent, 0);
+            }
+
+            private Intent getIntent(Context context, Position destination) {
                 Intent intent = new Intent(context, GuidingService.class);
                 intent.setAction(SetDestinationHandler.ACTION);
                 intent.putExtra(SetDestinationHandler.KEY_LATITUDE, destination.latitude);
                 intent.putExtra(SetDestinationHandler.KEY_LONGITUDE, destination.longitude);
-                context.startService(intent);
+                return intent;
             }
+
         }
 
         protected final GuidingService state;

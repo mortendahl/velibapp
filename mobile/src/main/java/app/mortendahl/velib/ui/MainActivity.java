@@ -2,6 +2,9 @@ package app.mortendahl.velib.ui;
 
 import java.util.Locale;
 
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -25,6 +28,17 @@ import app.mortendahl.velib.ui.list.StationListFragment;
 import app.mortendahl.velib.ui.map.MapsFragment;
 
 public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
+
+    public static PendingIntent getPendingIntent(Context context) {
+
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setAction(Intent.ACTION_MAIN);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+
+        return pendingIntent;
+
+    }
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide

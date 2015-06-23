@@ -10,15 +10,14 @@ import android.support.v4.app.NotificationManagerCompat;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
+import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
-import app.mortendahl.velib.library.eventbus.EventStore;
 import app.mortendahl.velib.network.jcdecaux.Position;
-import app.mortendahl.velib.service.GuidingService;
+import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.ui.MainActivity;
-import de.greenrobot.event.EventBus;
 
 public class ActivityReceiver extends BaseBroadcastReceiver {
 
@@ -86,8 +85,7 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
             }
 
             ActivityEvent event = ActivityEvent.fromPlayActivity(detectedActivity);
-            EventStore.storeEvent(event);
-            EventBus.getDefault().post(event);
+            EventSystem.post(event);
 
         }
 

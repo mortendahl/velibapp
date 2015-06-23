@@ -12,8 +12,8 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.SystemClock;
 
+import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.VelibApplication;
-import de.greenrobot.event.EventBus;
 
 public class ConnectivityReceiver extends BroadcastReceiver {
 
@@ -52,7 +52,7 @@ public class ConnectivityReceiver extends BroadcastReceiver {
                 event.type = activeNetwork.getType();
                 event.ssid = currentSsid;
 
-                EventBus.getDefault().post(event);
+                EventSystem.post(event);
 
             } else {
 
@@ -65,7 +65,7 @@ public class ConnectivityReceiver extends BroadcastReceiver {
                 event.type = activeNetwork.getType();
                 event.ssid = null;
 
-                EventBus.getDefault().post(event);
+                EventSystem.post(event);
 
             }
 
@@ -80,7 +80,7 @@ public class ConnectivityReceiver extends BroadcastReceiver {
             event.type = null;
             event.ssid = null;
 
-            EventBus.getDefault().post(event);
+            EventSystem.post(event);
 
         }
 

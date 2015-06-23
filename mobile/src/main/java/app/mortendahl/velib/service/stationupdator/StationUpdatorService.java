@@ -1,17 +1,25 @@
-package app.mortendahl.velib.service;
+package app.mortendahl.velib.service.stationupdator;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
+import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
 import app.mortendahl.velib.library.background.WakeLockManager;
+import app.mortendahl.velib.network.RestRequest;
+import app.mortendahl.velib.network.jcdecaux.StationListRequest;
+import app.mortendahl.velib.network.jcdecaux.VelibStation;
+import app.mortendahl.velib.service.AsyncTaskRestRequest;
+import app.mortendahl.velib.service.RestResponseHandler;
 
 public class StationUpdatorService extends BaseService {
 
@@ -55,8 +63,54 @@ public class StationUpdatorService extends BaseService {
 
         @Override
         public void run() {
-            VelibApplication.reloadStations();
+            reloadStations();
             handler.postDelayed(this, 15000);
+        }
+
+        private StationListRequest currentRequest = null;
+
+        private void reloadStations() {
+
+            Logger.debug(Logger.TAG_SYSTEM, VelibApplication.class, "reloadStations" + (currentRequest!=null?", skipping" :""));
+            if (currentRequest != null) { return; }
+
+            currentRequest = new StationListRequest();
+
+            new AsyncTaskRestRequest<>(currentRequest, new RestResponseHandler<StationListRequest.StationResponse>() {
+
+                @Override
+                public void onError(RestRequest<?> request, Exception e) {
+                    currentRequest = null;
+                    Logger.debug(Logger.TAG_SYSTEM, this, "reloadStations, onError, " + e.toString());
+                }
+
+                @Override
+                public void onResponse(StationListRequest.StationResponse response) {
+                    currentRequest = null;
+                    updateStations(response.stations);
+                    Logger.debug(Logger.TAG_SYSTEM, this, "reloadStations, onResponse");
+                }
+
+            }).execute();
+
+        }
+
+        protected void updateStations(Collection<VelibStation> stations) {
+            boolean added = false;
+
+            Map<Integer, VelibStation> stationsMap = VelibApplication.getSessionStore().stationsMap;
+
+            for (VelibStation station : stations) {
+                Object previousMapping = stationsMap.put(station.number, station);
+                added = added || previousMapping == null;
+            }
+
+            if (added) {
+                EventSystem.post(new VelibStationsChangedEvent());
+            } else {
+                EventSystem.post(new VelibStationUpdatedEvent());
+            }
+
         }
 
     }

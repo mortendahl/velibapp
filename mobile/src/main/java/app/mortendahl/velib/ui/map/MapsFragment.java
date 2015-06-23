@@ -18,17 +18,16 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
+import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.library.ui.BitmapHelper;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
-import app.mortendahl.velib.service.GuidingService;
-import app.mortendahl.velib.service.StationUpdatorService;
-import app.mortendahl.velib.service.VelibStationUpdatedEvent;
-import app.mortendahl.velib.service.VelibStationsChangedEvent;
+import app.mortendahl.velib.service.guiding.GuidingService;
+import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
+import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
+import app.mortendahl.velib.service.stationupdator.VelibStationsChangedEvent;
 
 import java.util.Collection;
-
-import de.greenrobot.event.EventBus;
 
 public class MapsFragment extends SupportMapFragment {
 
@@ -56,14 +55,14 @@ public class MapsFragment extends SupportMapFragment {
     public void onResume() {
         super.onResume();
         StationUpdatorService.updatesAction.request(getActivity(), getClass().getSimpleName());
-        EventBus.getDefault().register(eventBusListener);
+        EventSystem.register(eventBusListener);
     }
 
     @Override
     public void onPause() {
         super.onResume();
         StationUpdatorService.updatesAction.remove(getActivity(), getClass().getSimpleName());
-        EventBus.getDefault().unregister(eventBusListener);
+        EventSystem.unregister(eventBusListener);
     }
 
     private class EventBusListener {
@@ -205,7 +204,7 @@ public class MapsFragment extends SupportMapFragment {
         Logger.debug(Logger.TAG_GUI, this, "reloadStationMarkers");
 
         clusterManager.clearItems();
-        Collection<VelibStation> stations = VelibApplication.stationsMap.values();
+        Collection<VelibStation> stations = VelibApplication.getSessionStore().stationsMap.values();
         if (stations.isEmpty()) { return; }
 
         previousReloadTimestamp = currentTimestamp;

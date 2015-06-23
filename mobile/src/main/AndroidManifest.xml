@@ -36,12 +36,12 @@
         </activity>
 
         <service
-            android:name=".service.GuidingService"
+            android:name=".service.guiding.GuidingService"
             android:enabled="true"
             android:exported="true" />
 
         <service
-            android:name=".service.StationUpdatorService"
+            android:name=".service.stationupdator.StationUpdatorService"
             android:enabled="true"
             android:exported="false" />
 

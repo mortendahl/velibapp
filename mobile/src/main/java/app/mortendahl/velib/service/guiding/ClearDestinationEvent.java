@@ -1,4 +1,4 @@
-package app.mortendahl.velib.service;
+package app.mortendahl.velib.service.guiding;
 
 import org.json.JSONException;
 import org.json.JSONObject;

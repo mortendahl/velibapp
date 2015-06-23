@@ -1,4 +1,4 @@
-package app.mortendahl.velib.service;
+package app.mortendahl.velib.service.guiding;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -9,20 +9,21 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
+import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
-import app.mortendahl.velib.library.eventbus.EventStore;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
+import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
+import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
+import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
 import app.mortendahl.velib.ui.MainActivity;
 
 import java.util.Collections;
 import java.util.Comparator;
-
-import de.greenrobot.event.EventBus;
 
 public class GuidingService extends BaseService {
 
@@ -30,21 +31,21 @@ public class GuidingService extends BaseService {
 
     public GuidingService() {
         setActionHandlers(
-                new ClearDestinationHandler(this),
-                new SetDestinationHandler(this)
+                new ClearDestinationAction.Handler(this),
+                new SetDestinationAction.Handler(this)
         );
     }
 
     @Override
     protected void onEnteringSticky() {
         Logger.debug(Logger.TAG_SERVICE, this, "onEnteringSticky");
-        if (!EventBus.getDefault().isRegistered(eventBusListener)) { EventBus.getDefault().register(eventBusListener); }
+        if (!EventSystem.isRegistered(eventBusListener)) { EventSystem.register(eventBusListener); }
     }
 
     @Override
     protected void onLeavingSticky() {
         Logger.debug(Logger.TAG_SERVICE, this, "onLeavingSticky");
-        EventBus.getDefault().unregister(eventBusListener);
+        EventSystem.unregister(eventBusListener);
     }
 
     protected Notification buildForegroundNotification(VelibStation station) {
@@ -104,7 +105,7 @@ public class GuidingService extends BaseService {
 
         if (destination == null) { return null; }
 
-        return Collections.min(VelibApplication.stationsMap.values(), new Comparator<VelibStation>() {
+        return Collections.min(VelibApplication.getSessionStore().stationsMap.values(), new Comparator<VelibStation>() {
 
             // TODO this is a very inefficient way of getting distance!
 
@@ -178,18 +179,13 @@ public class GuidingService extends BaseService {
     protected Position destination = null;
 
 
-    public static final SetDestinationHandler.Invoker setDestinationAction = new SetDestinationHandler.Invoker();
+    public static final SetDestinationAction.Invoker setDestinationAction = new SetDestinationAction.Invoker();
 
-    public static class SetDestinationHandler extends ActionHandler {
+    public static class SetDestinationAction {
 
         public static final String ACTION = "set_dest";
         public static final String KEY_LATITUDE = "dest_latitude";
         public static final String KEY_LONGITUDE = "dest_longitude";
-
-        @Override
-        public String getAction() {
-            return ACTION;
-        }
 
         public static class Invoker {
 
@@ -205,59 +201,63 @@ public class GuidingService extends BaseService {
 
             private Intent getIntent(Context context, Position destination) {
                 Intent intent = new Intent(context, GuidingService.class);
-                intent.setAction(SetDestinationHandler.ACTION);
-                intent.putExtra(SetDestinationHandler.KEY_LATITUDE, destination.latitude);
-                intent.putExtra(SetDestinationHandler.KEY_LONGITUDE, destination.longitude);
+                intent.setAction(SetDestinationAction.ACTION);
+                intent.putExtra(SetDestinationAction.KEY_LATITUDE, destination.latitude);
+                intent.putExtra(SetDestinationAction.KEY_LONGITUDE, destination.longitude);
                 return intent;
             }
 
         }
 
-        protected final GuidingService state;
+        public static class Handler extends ActionHandler {
 
-        public SetDestinationHandler(GuidingService state) {
-            this.state = state;
+            private final GuidingService state;
+
+            public Handler(GuidingService state) {
+                this.state = state;
+            }
+
+            @Override
+            public String getAction() {
+                return ACTION;
+            }
+
+            @Override
+            public Boolean handleSticky(Context context, Intent intent) {
+
+                Bundle bundle = intent.getExtras();
+                if (!bundle.containsKey(KEY_LATITUDE)) { return null; }
+                if (!bundle.containsKey(KEY_LONGITUDE)) { return null; }
+
+                double latitude = bundle.getDouble(KEY_LATITUDE);
+                double longitude = bundle.getDouble(KEY_LONGITUDE);
+                Position destination = new Position(latitude, longitude);
+                state.destination = destination;
+
+                StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
+
+                VelibStation station = state.getBestStationForDestination();
+                Notification notification = state.buildForegroundNotification(station);
+                state.startForeground(101, notification);
+
+                SetDestinationEvent event = new SetDestinationEvent(destination);
+                EventSystem.post(event);
+
+                return true;
+
+            }
+
         }
 
-        @Override
-        public Boolean handleSticky(Context context, Intent intent) {
-
-            Bundle bundle = intent.getExtras();
-            if (!bundle.containsKey(KEY_LATITUDE)) { return null; }
-            if (!bundle.containsKey(KEY_LONGITUDE)) { return null; }
-
-            double latitude = bundle.getDouble(KEY_LATITUDE);
-            double longitude = bundle.getDouble(KEY_LONGITUDE);
-            Position destination = new Position(latitude, longitude);
-            state.destination = destination;
-
-            StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
-
-            VelibStation station = state.getBestStationForDestination();
-            Notification notification = state.buildForegroundNotification(station);
-            state.startForeground(101, notification);
-
-            SetDestinationEvent event = new SetDestinationEvent(destination);
-            EventStore.storeEvent(event);
-            EventBus.getDefault().post(event);
-
-            return true;
-
-        }
     }
 
 
 
-    public static final ClearDestinationHandler.Invoker clearDestinationAction = new ClearDestinationHandler.Invoker();
+    public static final ClearDestinationAction.Invoker clearDestinationAction = new ClearDestinationAction.Invoker();
 
-    public static class ClearDestinationHandler extends ActionHandler {
+    public static class ClearDestinationAction {
 
         public static final String ACTION = "clear_dest";
-
-        @Override
-        public String getAction() {
-            return ACTION;
-        }
 
         public static class Invoker {
 
@@ -275,24 +275,33 @@ public class GuidingService extends BaseService {
 
         }
 
-        protected final GuidingService state;
+        public static class Handler extends ActionHandler {
 
-        public ClearDestinationHandler(GuidingService state) {
-            this.state = state;
+            private final GuidingService state;
+
+            public Handler(GuidingService state) {
+                this.state = state;
+            }
+
+            @Override
+            public String getAction() {
+                return ACTION;
+            }
+
+            @Override
+            public Boolean handleSticky(Context context, Intent intent) {
+
+                state.destination = null;
+                StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
+
+                ClearDestinationEvent event = new ClearDestinationEvent();
+                EventSystem.post(event);
+
+                return false;
+            }
+
         }
 
-        @Override
-        public Boolean handleSticky(Context context, Intent intent) {
-
-            state.destination = null;
-            StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
-
-            ClearDestinationEvent event = new ClearDestinationEvent();
-            EventStore.storeEvent(event);
-            EventBus.getDefault().post(event);
-
-            return false;
-        }
     }
 
 }

@@ -1,5 +1,10 @@
 package app.mortendahl.velib.ui.list;
 
+import android.app.Activity;
+import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -8,25 +13,31 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
-import app.mortendahl.velib.VelibApplication;
-import app.mortendahl.velib.network.jcdecaux.VelibStation;
-import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
-import app.mortendahl.velib.service.VelibStationUpdatedEvent;
+import app.mortendahl.velib.network.jcdecaux.Position;
+import app.mortendahl.velib.service.guiding.GuidingService;
+import app.mortendahl.velib.service.guiding.SetDestinationEvent;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
-import de.greenrobot.event.EventBus;
-
-public class StationListFragment extends Fragment implements AbsListView.OnItemClickListener, AdapterView.OnItemLongClickListener {
-
-    private AbsListView mListView;
-
-    private ListAdapter mAdapter;
+public class StationListFragment extends Fragment implements AbsListView.OnItemClickListener {
 
     public static StationListFragment newInstance() {
         StationListFragment fragment = new StationListFragment();
@@ -35,7 +46,10 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
         return fragment;
     }
 
-    protected ArrayList<VelibStationListItem> items = new ArrayList<>();
+    private AbsListView listView;
+
+    protected ArrayList<SuggestedDestination> items = new ArrayList<>();
+    protected ArrayAdapter<SuggestedDestination> adapter;
 
     public StationListFragment() {}
 
@@ -45,20 +59,27 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
 
         if (getArguments() != null) {}
 
-        mAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, android.R.id.text1, items);
+        adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, android.R.id.text1, items);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        geocoder = new Geocoder(activity.getApplicationContext(), Locale.getDefault());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_item, container, false);
 
-        // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
-        ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
-
-        // Set OnItemClickListener so we can be notified on item clicks
-        mListView.setOnItemClickListener(this);
-        mListView.setOnItemLongClickListener(this);
+        listView = (AbsListView) view.findViewById(android.R.id.list);
+        listView.setAdapter(adapter);
+        listView.setOnItemClickListener(this);
+        View emptyView = listView.getEmptyView();
+        if (emptyView instanceof TextView) {
+            ((TextView) emptyView).setText("empty");
+        }
 
         return view;
     }
@@ -66,76 +87,216 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
     @Override
     public void onResume() {
         super.onResume();
-        EventBus.getDefault().register(eventBusListener);
+        reloadList();
     }
 
     @Override
     public void onPause() {
-        super.onResume();
-        EventBus.getDefault().unregister(eventBusListener);
+        super.onPause();
+        cancelReverseGeocodeTasks();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+        SuggestedDestination chosenDestination = items.get(position);
+        Logger.debug(Logger.TAG_GUI, this, chosenDestination.getPrimaryAddressLine());
+        GuidingService.setDestinationAction.invoke(getActivity(), chosenDestination.position);
     }
 
-    @Override
-    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+    private ArrayList<SuggestedDestination> getSuggestedDestinations() {
 
-        int stationNumber = items.get(position).id;
-        VelibStation station = VelibApplication.stationsMap.get(stationNumber);
-//        Logger.debug(Logger.TAG_GUI, this, "deleting " + station.name);
-//        VelibApplication.monitoredVelibStation.remove(stationNumber);
-//
-//        updateList();
+        //
+        // load previous destinations
+        //
 
-        //GuidingService.setDestination(station);
+        ArrayList<PreviousDestination> previousDestinations = new ArrayList<>();
 
-        return true;
-    }
+        for (JSONObject jsonEvent : EventSystem.loadAll()) {
+            try {
 
-    /**
-     * The default content for this Fragment has a TextView that is shown when
-     * the list is empty. If you would like to change the text, call this method
-     * to supply the text it should use.
-     */
-    public void setEmptyText(CharSequence emptyText) {
-        View emptyView = mListView.getEmptyView();
+                if ( ! SetDestinationEvent.class.getSimpleName().equals(jsonEvent.getString("class"))) { continue; }
+                double latitude = jsonEvent.getDouble("latitude");
+                double longitude = jsonEvent.getDouble("longitude");
+                Position position = new Position(latitude, longitude);
 
-        if (emptyView instanceof TextView) {
-            ((TextView) emptyView).setText(emptyText);
+                previousDestinations.add(new PreviousDestination(position));
+
+            } catch (JSONException e) {
+                Logger.error(Logger.TAG_GUI, this, e);
+            }
         }
+
+        //
+        // make suggestions based on these
+        //
+
+        NonHierarchicalDistanceBasedAlgorithm<PreviousDestination> clusterAlgo = new NonHierarchicalDistanceBasedAlgorithm();
+        clusterAlgo.addItems(previousDestinations);
+        Set<? extends Cluster<PreviousDestination>> clusters = clusterAlgo.getClusters(14d);
+
+        ArrayList<SuggestedDestination> clusterCenters = new ArrayList();
+        for (Cluster<PreviousDestination> cluster : clusters) {
+            double count = cluster.getItems().size();
+            double lats = 0d;
+            double lons = 0d;
+
+            for (PreviousDestination dest : cluster.getItems()) {
+                lats += dest.position.latitude;
+                lons += dest.position.longitude;
+            }
+
+            double latCenter = lats/count;
+            double lonCenter = lons/count;
+
+            clusterCenters.add(new SuggestedDestination(count, latCenter, lonCenter));
+        }
+
+        return clusterCenters;
     }
 
-    protected void updateList() {
+    private void reloadList() {
 
+        // clean up existing
+        cancelReverseGeocodeTasks();
         items.clear();
 
-        for (Integer stationNumber : VelibApplication.monitoredVelibStation) {
-            VelibStation station = VelibApplication.stationsMap.get(stationNumber);
-            if (station != null) { items.add(VelibStationListItem.fromVelibStation(station)); }
+        ArrayList<SuggestedDestination> suggestedDestinations = getSuggestedDestinations();
+        Collections.sort(suggestedDestinations, new Comparator<SuggestedDestination>() {
+            @Override
+            public int compare(SuggestedDestination lhs, SuggestedDestination rhs) {
+                return -1 * Double.compare(lhs.weight, rhs.weight);
+            }
+        });
+
+        for (SuggestedDestination destination : suggestedDestinations) {
+
+            // add to list
+            items.add(destination);
+
+            // ... and create and launch reverse geocoding task
+            ReverseGeocodeDestinationTask task = new ReverseGeocodeDestinationTask(destination);
+            geocodingTasks.add(task);
+            task.execute();
+
         }
 
-        mAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, android.R.id.text1, items);
-        ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
+        // notify adapter about changes
+        adapter.notifyDataSetChanged();
 
     }
 
-    private EventBusListener eventBusListener = new EventBusListener();
+    private void cancelReverseGeocodeTasks() {
+        for (ReverseGeocodeDestinationTask task : geocodingTasks) {
+            task.cancel(true);
+        }
+        geocodingTasks.clear();
+    }
 
+    protected Geocoder geocoder;
 
-    private class EventBusListener {
+    private ArrayList<ReverseGeocodeDestinationTask> geocodingTasks = new ArrayList<>();
 
-        public void onEvent(VelibStationUpdatedEvent event) {
-            Logger.debug(Logger.TAG_GUI, this, event.getClass().getSimpleName());
-            updateList();
+    private class PreviousDestination implements ClusterItem {
+
+        private final Position position;
+        private LatLng cachedLatLng = null;
+
+        public PreviousDestination(Position position) {
+            this.position = position;
         }
 
-        public void onEvent(MonitoredVelibStationsChangedEvent event) {
-            updateList();
+        @Override
+        public LatLng getPosition() {
+            if (cachedLatLng == null) {
+                cachedLatLng = new LatLng(position.latitude, position.longitude);
+            }
+            return cachedLatLng;
         }
 
+    }
+
+    private class SuggestedDestination {
+
+        public final double weight;
+        public final Position position;
+        public Address address = null;
+
+        public SuggestedDestination(double weight, double latitude, double longitude) {
+            this.weight = weight;
+            this.position = new Position(latitude, longitude);
+        }
+
+        public String getPrimaryAddressLine() {
+            String lineOne = address.getMaxAddressLineIndex() > 0 ? address.getAddressLine(0) : "";
+            return lineOne;
+        }
+
+        public String getSecondaryAddressLine() {
+
+            String postalCode = address.getPostalCode();
+            String locality = address.getLocality();
+            String countryName = address.getCountryName();
+            String lineTwo = null;
+            if (postalCode != null && !postalCode.isEmpty()) {
+                lineTwo = postalCode;
+            }
+            if (locality != null && !locality.isEmpty()) {
+                lineTwo = (lineTwo != null ? lineTwo + ", " + locality : locality);
+            }
+            if (countryName != null && !countryName.isEmpty()) {
+                lineTwo = (lineTwo != null ? lineTwo + ", " + countryName : countryName);
+            }
+
+            return lineTwo;
+        }
+
+        @Override
+        public String toString() {
+            return address != null ? getPrimaryAddressLine() : String.format("%f, %f", position.latitude, position.longitude);
+        }
+
+    }
+
+    private class ReverseGeocodeDestinationTask extends AsyncTask<Void, Void, Address> {
+
+        private final SuggestedDestination item;
+
+        public ReverseGeocodeDestinationTask(SuggestedDestination item) {
+            this.item = item;
+        }
+
+        @Override
+        protected Address doInBackground(Void... params) {
+
+            List<Address> addresses = null;
+            try {
+                addresses = geocoder.getFromLocation(item.position.latitude, item.position.longitude, 1);
+            } catch (Exception e) {
+                Logger.error(Logger.TAG_GUI, this, e);
+                return null;
+            }
+
+            if (addresses == null || addresses.size() < 1) { return null; }
+
+            // return the first address
+            return addresses.get(0);
+        }
+
+        // NOTE runs on UI thread, so safe to update data model
+        @Override
+        protected void onPostExecute(Address address) {
+            if (address == null) { return; }
+            item.address = address;
+            adapter.notifyDataSetChanged();
+        }
+
+    }
+
+    private class SuggestedDestinationsAdapter extends ArrayAdapter<SuggestedDestination> {
+
+        public SuggestedDestinationsAdapter(Context context, int resource, int textViewResourceId, List<SuggestedDestination> items) {
+            super(context, resource, textViewResourceId, items);
+        }
     }
 
 }

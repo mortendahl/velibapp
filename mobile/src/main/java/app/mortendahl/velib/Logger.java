@@ -3,6 +3,8 @@ package app.mortendahl.velib;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+
 public final class Logger {
 
 	public static final String TAG_SYSTEM	= "VelibSystem";
@@ -79,10 +81,15 @@ public final class Logger {
 	public static void error(String tag, Object instanceCaller, String message) {
 		Log.e(tag, format(instanceCaller, message));
 	}
-	
-	public static void error(String tag, String namedCaller, String message) {
-		Log.e(tag, format(namedCaller, message));
+
+	public static void error(String tag, Object instanceCaller, Throwable e) {
+		Crashlytics.getInstance().core.logException(e);
+		Log.e(tag, format(instanceCaller, e.toString()));
 	}
+	
+//	public static void error(String tag, String namedCaller, String message) {
+//		Log.e(tag, format(namedCaller, message));
+//	}
 
 	
 	public static void warn(String tag, Class<?> staticCaller, String message) {

@@ -234,7 +234,7 @@ public class ServerConnection {
 		}
 		
 		String mobileModel = Build.MANUFACTURER + " " + Build.MODEL;
-		String userAgent = String.format("Velib %s; Android %s; %s", appVersion, Build.VERSION.RELEASE, mobileModel);
+		String userAgent = String.format("Velib Watch %s; Android %s; %s", appVersion, Build.VERSION.RELEASE, mobileModel);
 		
 		return userAgent;
 		

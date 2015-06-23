@@ -1,4 +1,4 @@
-package app.mortendahl.velib.service;
+package app.mortendahl.velib.service.stationupdator;
 
 public class VelibStationUpdatedEvent {
 

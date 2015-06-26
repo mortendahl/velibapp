@@ -54,15 +54,17 @@ public class LocationReceiver extends BaseBroadcastReceiver {
 
         @Override
         public void handle(Context context, Intent intent) {
+
             Location location = (Location) intent.getExtras().get(FusedLocationProviderApi.KEY_LOCATION_CHANGED);
             if (location == null) { return; }
 
-            LocationUpdatedEvent event = new LocationUpdatedEvent(location);
+            LocationUpdateEvent event = new LocationUpdateEvent(location);
+
             DataStore.record(event);
             EventBus.getDefault().post(event);
 
             ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();
-            app.getContextAwareHandler().onLocationUpdate(location);
+            app.getContextAwareHandler().onLocationUpdate(event);
 
         }
 

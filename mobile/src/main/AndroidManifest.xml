@@ -53,6 +53,19 @@
 
         <!-- Library -->
 
+
+        <!--
+         TODO
+
+         <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+         <action android:name="android.location.PROVIDERS_CHANGED" />
+
+         <action android:name="android.intent.action.ACTION_BATTERY_LOW" />
+                <action android:name="android.intent.action.ACTION_BATTERY_OKAY" />
+
+         -->
+
         <service
             android:name=".library.contextaware.location.LocationManager"
             android:exported="false" />
@@ -96,7 +109,16 @@
             android:name=".library.contextaware.connectivity.ConnectivityReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".library.contextaware.power.PowerReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
             </intent-filter>
         </receiver>
 

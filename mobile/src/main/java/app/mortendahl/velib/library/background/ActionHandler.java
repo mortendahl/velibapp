@@ -13,7 +13,7 @@ public abstract class ActionHandler {
     }
 
     public void handle(Context context, Intent intent) {
-        throw new UnsupportedOperationException("must override handle");
+        throw new UnsupportedOperationException("must override handle (if not overriding handleSticky)");
     }
 
 }

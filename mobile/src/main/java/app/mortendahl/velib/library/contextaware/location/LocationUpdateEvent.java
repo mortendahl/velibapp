@@ -8,23 +8,23 @@ import org.json.JSONObject;
 
 import app.mortendahl.velib.service.data.BaseEvent;
 
-public class LocationUpdatedEvent extends BaseEvent {
+public class LocationUpdateEvent extends BaseEvent {
 
     public final Location location;
 
-    public LocationUpdatedEvent() {
+    public LocationUpdateEvent() {
         this.location = null;
     }
 
-    public LocationUpdatedEvent(Location location) {
+    public LocationUpdateEvent(Location location) {
         this.location = location;
     }
 
     @Override
     public String toString() {
         return  location != null
-                ? String.format("%s(%f, %f, %f)", LocationUpdatedEvent.class.getSimpleName(), location.getLatitude(), location.getLongitude(), location.getAccuracy())
-                : String.format("%s(null)", LocationUpdatedEvent.class.getSimpleName());
+                ? String.format("%s(%f, %f, %f)", LocationUpdateEvent.class.getSimpleName(), location.getLatitude(), location.getLongitude(), location.getAccuracy())
+                : String.format("%s(null)", LocationUpdateEvent.class.getSimpleName());
     }
 
     @Override

@@ -31,7 +31,6 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
 
         @Override
         public void handle(Context context, Intent intent) {
-            // don't do anything
             ActivityManager.frequencyAction.setInterval(context, 60);
         }
 
@@ -60,12 +59,13 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
 
             DetectedActivity detectedActivity = result.getMostProbableActivity();
 
-            ActivityEvent event = ActivityEvent.fromPlayActivity(detectedActivity);
+            ActivityUpdateEvent event = ActivityUpdateEvent.fromPlayActivity(detectedActivity);
+
             DataStore.record(event);
             EventBus.getDefault().post(event);  // TODO move this to context aware handler?
 
             ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();
-            app.getContextAwareHandler().onActivityUpdate(detectedActivity);
+            app.getContextAwareHandler().onActivityUpdate(event);
 
         }
 

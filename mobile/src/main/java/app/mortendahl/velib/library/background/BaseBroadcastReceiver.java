@@ -6,7 +6,7 @@ import android.content.Intent;
 
 import java.util.HashMap;
 
-public class BaseBroadcastReceiver extends BroadcastReceiver {
+public abstract class BaseBroadcastReceiver extends BroadcastReceiver {
 
     private HashMap<String, ActionHandler> actionMap;
 

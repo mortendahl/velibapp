@@ -72,7 +72,7 @@ public class StationUpdatorService extends BaseService {
         private void reloadStations() {
 
             Logger.debug(Logger.TAG_SYSTEM, VelibApplication.class, "reloadStations" + (currentRequest!=null?", skipping" :""));
-            if (currentRequest != null) { return; }
+            if (currentRequest != null) { return; }  // wait for any current request to finish
 
             currentRequest = new StationListRequest();
 

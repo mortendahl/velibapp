@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 import app.mortendahl.velib.Logger;
 
-public class BaseService extends Service {
+public abstract class BaseService extends Service {
 
     private HashMap<String, ActionHandler> actionMap;
 

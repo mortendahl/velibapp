@@ -18,6 +18,7 @@ public final class PrefHelper {
         return PreferenceManager.getDefaultSharedPreferences(appContext);
     }
 
+
     public static String loadString(String key, String defaultValue) {
         return getPrefs(cachedAppContext).getString(key, defaultValue);
     }
@@ -28,6 +29,7 @@ public final class PrefHelper {
                 .putString(key, value)
                 .commit();
     }
+
 
     public static Long loadLong(String key, Long defaultValue) {
         if ( ! getPrefs(cachedAppContext).contains(key)) {
@@ -43,6 +45,7 @@ public final class PrefHelper {
                 .commit();
     }
 
+
     public static Boolean loadBoolean(String key, Boolean defaultValue) {
         if ( ! getPrefs(cachedAppContext).contains(key)) {
             return defaultValue;
@@ -57,6 +60,7 @@ public final class PrefHelper {
                 .commit();
     }
 
+
     public static Integer loadInteger(String key, Integer defaultValue) {
         if ( ! getPrefs(cachedAppContext).contains(key)) {
             return defaultValue;
@@ -70,6 +74,7 @@ public final class PrefHelper {
                 .putInt(key, value)
                 .commit();
     }
+
 
     public static Double loadDouble(String key, Double defaultValue) {
         SharedPreferences prefs = getPrefs(cachedAppContext);
@@ -86,6 +91,7 @@ public final class PrefHelper {
                 .putString(key, Double.toString(value))
                 .commit();
     }
+
 
     public static void clear(String key) {
         getPrefs(cachedAppContext)

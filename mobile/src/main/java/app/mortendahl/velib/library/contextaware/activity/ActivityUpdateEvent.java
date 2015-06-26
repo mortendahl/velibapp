@@ -7,29 +7,41 @@ import org.json.JSONObject;
 
 import app.mortendahl.velib.service.data.BaseEvent;
 
-public class ActivityEvent extends BaseEvent {
+public class ActivityUpdateEvent extends BaseEvent {
 
-    public int type;
-    public int confidence;
+    public final int rawType;
+    public final boolean inVehicle;
+    public final boolean onBicycle;
+    public final boolean onFoot;
+    public final boolean still;
 
-    private ActivityEvent() {}
+    public final int confidence;
 
-    public static ActivityEvent fromPlayActivity(DetectedActivity activity) {
-        ActivityEvent event = new ActivityEvent();
-        event.type = activity.getType();
-        event.confidence = activity.getConfidence();
+    private ActivityUpdateEvent(int rawType, int confidence) {
+        // type
+        this.rawType = rawType;
+        this.inVehicle = rawType == DetectedActivity.IN_VEHICLE;
+        this.onBicycle = rawType == DetectedActivity.ON_BICYCLE;
+        this.onFoot = rawType == DetectedActivity.ON_FOOT;
+        this.still = rawType == DetectedActivity.STILL;
+        // confidence
+        this.confidence = confidence;
+    }
+
+    public static ActivityUpdateEvent fromPlayActivity(DetectedActivity activity) {
+        ActivityUpdateEvent event = new ActivityUpdateEvent(activity.getType(), activity.getConfidence());
         return event;
     }
 
     @Override
     public String toString() {
-        return String.format("%s(%s, %d)", getClass().getSimpleName(), describeActivityType(type), confidence);
+        return String.format("%s(%s, %d)", getClass().getSimpleName(), describeActivityType(rawType), confidence);
     }
 
     @Override
     public JSONObject toJson() throws JSONException {
         JSONObject json = super.toJson();
-        json.put("type", describeActivityType(type));
+        json.put("type", describeActivityType(rawType));
         json.put("confidence", confidence);
         return json;
     }

@@ -46,10 +46,7 @@ public class GeofenceManager extends BaseIntentService {
         }
 
         @Override
-        public void onConnected(Bundle bundle) {
-
-
-        }
+        public void onConnected(Bundle bundle) {}
 
         @Override
         public void onConnectionFailed(ConnectionResult result) {
@@ -90,6 +87,9 @@ public class GeofenceManager extends BaseIntentService {
 
         public static class Invoker {
             public void invoke(Context context) {
+                //
+                // TODO should take a wake lock -- wakefulbroadcastreceiver?
+                //
                 Intent intent = new Intent(context, GeofenceManager.class);
                 intent.setAction(ACTION);
                 context.startService(intent);

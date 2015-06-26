@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 import app.mortendahl.velib.service.data.BaseEvent;
 
-public class ConnectivityEvent extends BaseEvent {
+public class ConnectivityStabilisedEvent extends BaseEvent {
 
     public boolean connected;
     public Integer type;

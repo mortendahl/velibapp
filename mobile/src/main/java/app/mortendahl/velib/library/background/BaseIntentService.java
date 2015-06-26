@@ -5,7 +5,7 @@ import android.content.Intent;
 
 import java.util.HashMap;
 
-public class BaseIntentService extends IntentService {
+public abstract class BaseIntentService extends IntentService {
 
     private volatile HashMap<String, ActionHandler> actionMap;
 

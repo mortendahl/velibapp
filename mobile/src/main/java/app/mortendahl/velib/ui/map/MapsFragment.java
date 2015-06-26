@@ -18,7 +18,6 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
-import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.library.ui.BitmapHelper;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
@@ -26,6 +25,7 @@ import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
 import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
 import app.mortendahl.velib.service.stationupdator.VelibStationsChangedEvent;
+import de.greenrobot.event.EventBus;
 
 import java.util.Collection;
 
@@ -55,14 +55,14 @@ public class MapsFragment extends SupportMapFragment {
     public void onResume() {
         super.onResume();
         StationUpdatorService.updatesAction.request(getActivity(), getClass().getSimpleName());
-        EventSystem.register(eventBusListener);
+        EventBus.getDefault().register(eventBusListener);
     }
 
     @Override
     public void onPause() {
         super.onResume();
         StationUpdatorService.updatesAction.remove(getActivity(), getClass().getSimpleName());
-        EventSystem.unregister(eventBusListener);
+        EventBus.getDefault().unregister(eventBusListener);
     }
 
     private class EventBusListener {

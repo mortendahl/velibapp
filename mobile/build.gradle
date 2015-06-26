@@ -22,8 +22,8 @@ android {
         release {
             storeFile file('../../mortendahlapp.keystore')
             keyAlias 'google play release'
-            //storePassword ''    // never store password here! code below for asking at compile time
-            //keyPassword ''      // never store password here! code below for asking at compile time
+            //storePassword ''    // never record password here! code below for asking at compile time
+            //keyPassword ''      // never record password here! code below for asking at compile time
         }
     }
 

@@ -1,4 +1,4 @@
-package app.mortendahl.velib.library.eventbus;
+package app.mortendahl.velib.service.data;
 
 import org.json.JSONException;
 import org.json.JSONObject;

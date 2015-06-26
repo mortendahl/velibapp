@@ -7,9 +7,10 @@ import android.location.Location;
 
 import com.google.android.gms.location.FusedLocationProviderApi;
 
-import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
+import app.mortendahl.velib.service.data.DataStore;
+import de.greenrobot.event.EventBus;
 
 public class LocationReceiver extends BaseBroadcastReceiver {
 
@@ -56,7 +57,8 @@ public class LocationReceiver extends BaseBroadcastReceiver {
             if (location == null) { return; }
 
             LocationUpdatedEvent event = new LocationUpdatedEvent(location);
-            EventSystem.post(event);
+            DataStore.record(event);
+            EventBus.getDefault().post(event);
         }
 
     }

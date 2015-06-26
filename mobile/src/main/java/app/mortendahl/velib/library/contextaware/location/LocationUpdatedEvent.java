@@ -6,7 +6,7 @@ import android.location.Location;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import app.mortendahl.velib.library.eventbus.BaseEvent;
+import app.mortendahl.velib.service.data.BaseEvent;
 
 public class LocationUpdatedEvent extends BaseEvent {
 

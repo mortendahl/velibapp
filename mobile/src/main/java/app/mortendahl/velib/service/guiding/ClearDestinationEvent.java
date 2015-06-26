@@ -3,7 +3,7 @@ package app.mortendahl.velib.service.guiding;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import app.mortendahl.velib.library.eventbus.BaseEvent;
+import app.mortendahl.velib.service.data.BaseEvent;
 
 public class ClearDestinationEvent extends BaseEvent {
 

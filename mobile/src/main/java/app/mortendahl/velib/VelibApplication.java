@@ -4,13 +4,15 @@ import android.content.Context;
 
 import app.mortendahl.velib.library.background.BaseApplication;
 import app.mortendahl.velib.library.PrefHelper;
-import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.network.ServerConnection;
 import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
 
 import com.crashlytics.android.Crashlytics;
+
+import app.mortendahl.velib.service.data.DataStore;
+import de.greenrobot.event.EventBus;
 import io.fabric.sdk.android.Fabric;
 
 import java.util.LinkedHashMap;
@@ -39,7 +41,7 @@ public class VelibApplication extends BaseApplication {
 
 	public static void addMonitoredStation(int station) {
 		monitoredVelibStation.add(station);
-		EventSystem.post(new MonitoredVelibStationsChangedEvent());
+		EventBus.getDefault().post(new MonitoredVelibStationsChangedEvent());
 	}
 
 	@Override
@@ -53,11 +55,11 @@ public class VelibApplication extends BaseApplication {
 
         // setup system
         PrefHelper.configure(cachedAppContext);
-		EventSystem.configure(cachedAppContext);
+		DataStore.configure(cachedAppContext);
         ServerConnection.configure(cachedAppContext);
 
         // log all bus events
-        EventSystem.register(new EventBusDebugger());
+        EventBus.getDefault().register(new EventBusDebugger());
 
 	}
 

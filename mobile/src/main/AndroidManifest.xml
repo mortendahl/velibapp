@@ -45,6 +45,11 @@
             android:enabled="true"
             android:exported="false" />
 
+        <service
+            android:name=".service.data.DataProcessingService"
+            android:enabled="true"
+            android:exported="false" />
+
 
         <!-- Library -->
 

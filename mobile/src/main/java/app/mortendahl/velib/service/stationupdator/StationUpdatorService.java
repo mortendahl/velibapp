@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.background.ActionHandler;
@@ -20,6 +19,7 @@ import app.mortendahl.velib.network.jcdecaux.StationListRequest;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.service.AsyncTaskRestRequest;
 import app.mortendahl.velib.service.RestResponseHandler;
+import de.greenrobot.event.EventBus;
 
 public class StationUpdatorService extends BaseService {
 
@@ -106,9 +106,9 @@ public class StationUpdatorService extends BaseService {
             }
 
             if (added) {
-                EventSystem.post(new VelibStationsChangedEvent());
+                EventBus.getDefault().post(new VelibStationsChangedEvent());
             } else {
-                EventSystem.post(new VelibStationUpdatedEvent());
+                EventBus.getDefault().post(new VelibStationUpdatedEvent());
             }
 
         }

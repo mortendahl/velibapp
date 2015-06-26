@@ -15,27 +15,15 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.maps.android.clustering.Cluster;
-import com.google.maps.android.clustering.ClusterItem;
-import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import app.mortendahl.velib.library.eventbus.EventSystem;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
-import app.mortendahl.velib.network.jcdecaux.Position;
+import app.mortendahl.velib.service.data.DataStore;
 import app.mortendahl.velib.service.guiding.GuidingService;
-import app.mortendahl.velib.service.guiding.SetDestinationEvent;
+import app.mortendahl.velib.service.data.SuggestedDestination;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 public class StationListFragment extends Fragment implements AbsListView.OnItemClickListener {
 
@@ -63,13 +51,6 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-
-        geocoder = new Geocoder(activity.getApplicationContext(), Locale.getDefault());
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_item, container, false);
 
@@ -93,7 +74,6 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
     @Override
     public void onPause() {
         super.onPause();
-        cancelReverseGeocodeTasks();
     }
 
     @Override
@@ -103,192 +83,17 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
         GuidingService.setDestinationAction.invoke(getActivity(), chosenDestination.position);
     }
 
-    private ArrayList<SuggestedDestination> getSuggestedDestinations() {
-
-        //
-        // load previous destinations
-        //
-
-        ArrayList<PreviousDestination> previousDestinations = new ArrayList<>();
-
-        for (JSONObject jsonEvent : EventSystem.loadAll()) {
-            try {
-
-                if ( ! SetDestinationEvent.class.getSimpleName().equals(jsonEvent.getString("class"))) { continue; }
-                double latitude = jsonEvent.getDouble("latitude");
-                double longitude = jsonEvent.getDouble("longitude");
-                Position position = new Position(latitude, longitude);
-
-                previousDestinations.add(new PreviousDestination(position));
-
-            } catch (JSONException e) {
-                Logger.error(Logger.TAG_GUI, this, e);
-            }
-        }
-
-        //
-        // make suggestions based on these
-        //
-
-        NonHierarchicalDistanceBasedAlgorithm<PreviousDestination> clusterAlgo = new NonHierarchicalDistanceBasedAlgorithm();
-        clusterAlgo.addItems(previousDestinations);
-        Set<? extends Cluster<PreviousDestination>> clusters = clusterAlgo.getClusters(14d);
-
-        ArrayList<SuggestedDestination> clusterCenters = new ArrayList();
-        for (Cluster<PreviousDestination> cluster : clusters) {
-            double count = cluster.getItems().size();
-            double lats = 0d;
-            double lons = 0d;
-
-            for (PreviousDestination dest : cluster.getItems()) {
-                lats += dest.position.latitude;
-                lons += dest.position.longitude;
-            }
-
-            double latCenter = lats/count;
-            double lonCenter = lons/count;
-
-            clusterCenters.add(new SuggestedDestination(count, latCenter, lonCenter));
-        }
-
-        return clusterCenters;
-    }
-
     private void reloadList() {
 
         // clean up existing
-        cancelReverseGeocodeTasks();
         items.clear();
 
-        ArrayList<SuggestedDestination> suggestedDestinations = getSuggestedDestinations();
-        Collections.sort(suggestedDestinations, new Comparator<SuggestedDestination>() {
-            @Override
-            public int compare(SuggestedDestination lhs, SuggestedDestination rhs) {
-                return -1 * Double.compare(lhs.weight, rhs.weight);
-            }
-        });
-
-        for (SuggestedDestination destination : suggestedDestinations) {
-
-            // add to list
+        for (SuggestedDestination destination : DataStore.getSortedSuggestedDestinations()) {
             items.add(destination);
-
-            // ... and create and launch reverse geocoding task
-            ReverseGeocodeDestinationTask task = new ReverseGeocodeDestinationTask(destination);
-            geocodingTasks.add(task);
-            task.execute();
-
         }
 
         // notify adapter about changes
         adapter.notifyDataSetChanged();
-
-    }
-
-    private void cancelReverseGeocodeTasks() {
-        for (ReverseGeocodeDestinationTask task : geocodingTasks) {
-            task.cancel(true);
-        }
-        geocodingTasks.clear();
-    }
-
-    protected Geocoder geocoder;
-
-    private ArrayList<ReverseGeocodeDestinationTask> geocodingTasks = new ArrayList<>();
-
-    private class PreviousDestination implements ClusterItem {
-
-        private final Position position;
-        private LatLng cachedLatLng = null;
-
-        public PreviousDestination(Position position) {
-            this.position = position;
-        }
-
-        @Override
-        public LatLng getPosition() {
-            if (cachedLatLng == null) {
-                cachedLatLng = new LatLng(position.latitude, position.longitude);
-            }
-            return cachedLatLng;
-        }
-
-    }
-
-    private class SuggestedDestination {
-
-        public final double weight;
-        public final Position position;
-        public Address address = null;
-
-        public SuggestedDestination(double weight, double latitude, double longitude) {
-            this.weight = weight;
-            this.position = new Position(latitude, longitude);
-        }
-
-        public String getPrimaryAddressLine() {
-            String lineOne = address.getMaxAddressLineIndex() > 0 ? address.getAddressLine(0) : "";
-            return lineOne;
-        }
-
-        public String getSecondaryAddressLine() {
-
-            String postalCode = address.getPostalCode();
-            String locality = address.getLocality();
-            String countryName = address.getCountryName();
-            String lineTwo = null;
-            if (postalCode != null && !postalCode.isEmpty()) {
-                lineTwo = postalCode;
-            }
-            if (locality != null && !locality.isEmpty()) {
-                lineTwo = (lineTwo != null ? lineTwo + ", " + locality : locality);
-            }
-            if (countryName != null && !countryName.isEmpty()) {
-                lineTwo = (lineTwo != null ? lineTwo + ", " + countryName : countryName);
-            }
-
-            return lineTwo;
-        }
-
-        @Override
-        public String toString() {
-            return address != null ? getPrimaryAddressLine() : String.format("%f, %f", position.latitude, position.longitude);
-        }
-
-    }
-
-    private class ReverseGeocodeDestinationTask extends AsyncTask<Void, Void, Address> {
-
-        private final SuggestedDestination item;
-
-        public ReverseGeocodeDestinationTask(SuggestedDestination item) {
-            this.item = item;
-        }
-
-        @Override
-        protected Address doInBackground(Void... params) {
-
-            List<Address> addresses = null;
-            try {
-                addresses = geocoder.getFromLocation(item.position.latitude, item.position.longitude, 1);
-            } catch (Exception e) {
-                Logger.error(Logger.TAG_GUI, this, e);
-                return null;
-            }
-
-            if (addresses == null || addresses.size() < 1) { return null; }
-
-            // return the first address
-            return addresses.get(0);
-        }
-
-        // NOTE runs on UI thread, so safe to update data model
-        @Override
-        protected void onPostExecute(Address address) {
-            if (address == null) { return; }
-            item.address = address;
-            adapter.notifyDataSetChanged();
-        }
 
     }
 

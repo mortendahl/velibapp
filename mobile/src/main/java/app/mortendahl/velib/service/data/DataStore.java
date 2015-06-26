@@ -1,7 +1,10 @@
-package app.mortendahl.velib.library.eventbus;
+package app.mortendahl.velib.service.data;
 
 import android.content.Context;
 import android.os.Environment;
+
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,21 +18,25 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import app.mortendahl.velib.Logger;
-import de.greenrobot.event.EventBus;
+import app.mortendahl.velib.network.jcdecaux.Position;
+import app.mortendahl.velib.service.guiding.SetDestinationEvent;
 
-public final class EventSystem {
+public final class DataStore {
 
     private static Context appContext;
     private static String filename;
 
-    private EventSystem() {}
+    private DataStore() {}
 
     public static void configure(Context appContext) {
 
-        EventSystem.appContext = appContext;
+        DataStore.appContext = appContext;
 
         try {
 
@@ -38,23 +45,14 @@ public final class EventSystem {
             filename = storageDir.getCanonicalPath() + "/eventstore.json";
             //filename = "eventstore.json";
 
-            Logger.info(Logger.TAG_SYSTEM, EventSystem.class, "storing events in " + filename);
+            Logger.info(Logger.TAG_SYSTEM, DataStore.class, "storing events in " + filename);
         } catch (Exception e) {
             throw new AssertionError(e);
         }
 
     }
 
-    public static void post(Object event) {
-        EventBus.getDefault().post(event);
-    }
-
-    public static void post(BaseEvent event) {
-        store(event);
-        EventBus.getDefault().post(event);
-    }
-
-    public static synchronized void store(BaseEvent event) {
+    public static synchronized void record(BaseEvent event) {
 
         if (event == null) { return; }
 
@@ -69,7 +67,7 @@ public final class EventSystem {
 
         }
         catch (Exception e) {
-            Logger.error(Logger.TAG_SYSTEM, EventSystem.class, e);
+            Logger.error(Logger.TAG_SYSTEM, DataStore.class, e);
         }
         finally {
             if (w != null) {
@@ -97,13 +95,13 @@ public final class EventSystem {
                     events.add(jsonEvent);
                 }
                 catch (JSONException e) {
-                    Logger.error(Logger.TAG_SYSTEM, EventSystem.class, e);
+                    Logger.error(Logger.TAG_SYSTEM, DataStore.class, e);
                 }
 
             }
 
         } catch (Exception e) {
-            Logger.error(Logger.TAG_SYSTEM, EventSystem.class, e);
+            Logger.error(Logger.TAG_SYSTEM, DataStore.class, e);
         }
         finally {
             if (r != null) {
@@ -117,15 +115,10 @@ public final class EventSystem {
 
     }
 
-    public static boolean isRegistered(Object subscriber) {
-        return EventBus.getDefault().isRegistered(subscriber);
+    public static ArrayList<SuggestedDestination> getSortedSuggestedDestinations() {
+
     }
 
-    public static void register(Object subscriber) {
-        EventBus.getDefault().register(subscriber);
-    }
-
-    public static void unregister(Object subscriber) {
-        EventBus.getDefault().unregister(subscriber);
+    public static void updateSuggestedDestinations(ArrayList<SuggestedDestination> suggestedDestinations) {
     }
 }

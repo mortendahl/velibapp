@@ -9,8 +9,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 
 import java.util.concurrent.TimeUnit;
 
@@ -18,7 +16,6 @@ import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.library.PrefHelper;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
-import app.mortendahl.velib.library.contextaware.location.LocationReceiver;
 
 public class ActivityManager extends BaseIntentService {
 

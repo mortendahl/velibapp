@@ -10,7 +10,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import java.util.concurrent.TimeUnit;
@@ -18,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
-import app.mortendahl.velib.library.contextaware.location.LocationReceiver;
 import app.mortendahl.velib.network.jcdecaux.Position;
 
 public class GeofenceManager extends BaseIntentService {

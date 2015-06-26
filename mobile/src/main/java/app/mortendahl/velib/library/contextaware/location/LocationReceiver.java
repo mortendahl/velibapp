@@ -9,6 +9,7 @@ import com.google.android.gms.location.FusedLocationProviderApi;
 
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
+import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
 import app.mortendahl.velib.service.data.DataStore;
 import de.greenrobot.event.EventBus;
 
@@ -59,6 +60,10 @@ public class LocationReceiver extends BaseBroadcastReceiver {
             LocationUpdatedEvent event = new LocationUpdatedEvent(location);
             DataStore.record(event);
             EventBus.getDefault().post(event);
+
+            ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();
+            app.getContextAwareHandler().onLocationUpdate(location);
+
         }
 
     }

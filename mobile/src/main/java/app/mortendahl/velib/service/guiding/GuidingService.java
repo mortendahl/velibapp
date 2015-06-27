@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
+import app.mortendahl.velib.VelibContextAwareHandler;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
 import app.mortendahl.velib.network.jcdecaux.Position;
@@ -189,21 +190,21 @@ public class GuidingService extends BaseService {
 
         public static class Invoker {
 
-            public void invoke(Context context, Position destination) {
-                Intent intent = getIntent(context, destination);
+            public void invoke(Context context, double latitude, double longitude) {
+                Intent intent = getIntent(context, latitude, longitude);
                 context.startService(intent);
             }
 
             public PendingIntent getPendingIntent(Context context, Position destination) {
-                Intent intent = getIntent(context, destination);
+                Intent intent = getIntent(context, destination.latitude, destination.longitude);
                 return PendingIntent.getService(context, 0, intent, 0);
             }
 
-            private Intent getIntent(Context context, Position destination) {
+            private Intent getIntent(Context context, double latitude, double longitude) {
                 Intent intent = new Intent(context, GuidingService.class);
                 intent.setAction(SetDestinationAction.ACTION);
-                intent.putExtra(SetDestinationAction.KEY_LATITUDE, destination.latitude);
-                intent.putExtra(SetDestinationAction.KEY_LONGITUDE, destination.longitude);
+                intent.putExtra(SetDestinationAction.KEY_LATITUDE, latitude);
+                intent.putExtra(SetDestinationAction.KEY_LONGITUDE, longitude);
                 return intent;
             }
 
@@ -241,7 +242,7 @@ public class GuidingService extends BaseService {
                 state.startForeground(101, notification);
 
                 SetDestinationEvent event = new SetDestinationEvent(destination);
-                DataStore.record(event);
+                DataStore.getCollection(VelibContextAwareHandler.eventStoreId).append(event);
                 EventBus.getDefault().post(event);
 
                 return true;
@@ -296,7 +297,7 @@ public class GuidingService extends BaseService {
                 StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
 
                 ClearDestinationEvent event = new ClearDestinationEvent();
-                DataStore.record(event);
+                DataStore.getCollection(VelibContextAwareHandler.eventStoreId).append(event);
                 EventBus.getDefault().post(event);
 
                 return false;

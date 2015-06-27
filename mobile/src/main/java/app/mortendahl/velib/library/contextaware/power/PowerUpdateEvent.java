@@ -1,6 +1,6 @@
 package app.mortendahl.velib.library.contextaware.power;
 
-import app.mortendahl.velib.service.data.BaseEvent;
+import app.mortendahl.velib.library.contextaware.BaseEvent;
 
 public class PowerUpdateEvent extends BaseEvent {
 

@@ -8,7 +8,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import app.mortendahl.velib.service.data.BaseEvent;
+import app.mortendahl.velib.library.contextaware.BaseEvent;
 
 public class GeofenceTransitionEvent extends BaseEvent {
 

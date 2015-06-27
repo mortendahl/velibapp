@@ -60,7 +60,6 @@ public class LocationReceiver extends BaseBroadcastReceiver {
 
             LocationUpdateEvent event = new LocationUpdateEvent(location);
 
-            DataStore.record(event);
             EventBus.getDefault().post(event);
 
             ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();

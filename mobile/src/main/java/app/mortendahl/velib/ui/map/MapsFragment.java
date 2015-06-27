@@ -110,7 +110,7 @@ public class MapsFragment extends SupportMapFragment {
                 currentDestination.setPosition(latlng);
             }
 
-            GuidingService.setDestinationAction.invoke(getActivity(), new Position(latlng.latitude, latlng.longitude));
+            GuidingService.setDestinationAction.invoke(getActivity(), latlng.latitude, latlng.longitude);
 
         }
     }

@@ -8,15 +8,35 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
 import app.mortendahl.velib.library.contextaware.BaseContextAwareHandler;
+import app.mortendahl.velib.library.contextaware.BaseEvent;
+import app.mortendahl.velib.library.contextaware.ContextAwareHandler;
 import app.mortendahl.velib.library.contextaware.activity.ActivityUpdateEvent;
+import app.mortendahl.velib.library.contextaware.connectivity.ConnectivityChangeEvent;
+import app.mortendahl.velib.library.contextaware.connectivity.ConnectivityStabilisedEvent;
 import app.mortendahl.velib.library.contextaware.geofence.GeofenceTransitionEvent;
+import app.mortendahl.velib.library.contextaware.location.LocationUpdateEvent;
+import app.mortendahl.velib.library.contextaware.power.PowerUpdateEvent;
+import app.mortendahl.velib.service.data.DataStore;
 import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.ui.MainActivity;
 
-public class VelibContextAwareHandler extends BaseContextAwareHandler {
+public class VelibContextAwareHandler implements ContextAwareHandler {
+
+    public static final String eventStoreId = "eventstore";
+
+    private void record(BaseEvent event) {
+        DataStore.getCollection(eventStoreId).append(event);
+    }
+
+    @Override
+    public void onPowerUpdate(PowerUpdateEvent event) {
+        record(event);
+    }
 
     @Override
     public void onActivityUpdate(ActivityUpdateEvent event) {
+
+        record(event);
 
         Context context = VelibApplication.getCachedAppContext();
 
@@ -28,7 +48,14 @@ public class VelibContextAwareHandler extends BaseContextAwareHandler {
     }
 
     @Override
+    public void onLocationUpdate(LocationUpdateEvent event) {
+        record(event);
+    }
+
+    @Override
     public void onGeofenceTransition(GeofenceTransitionEvent event) {
+
+        record(event);
 
         Context context = VelibApplication.getCachedAppContext();
 
@@ -37,6 +64,16 @@ public class VelibContextAwareHandler extends BaseContextAwareHandler {
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(303, transitionNotification);
 
+    }
+
+    @Override
+    public void onConnectivityChange(ConnectivityChangeEvent event) {
+        //record(event);
+    }
+
+    @Override
+    public void onConnectivityStabilised(ConnectivityStabilisedEvent event) {
+        record(event);
     }
 
     private Notification buildGeofenceTransitionNotification(Context context, String fenceId, String transition) {

@@ -68,7 +68,6 @@ public class VelibApplication extends BaseApplication implements ContextAwareApp
 
         // setup system
         PrefHelper.configure(cachedAppContext);
-		DataStore.configure(cachedAppContext);
         ServerConnection.configure(cachedAppContext);
 
         // log all bus events

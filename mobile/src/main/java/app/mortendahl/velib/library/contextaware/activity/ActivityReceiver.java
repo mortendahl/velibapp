@@ -10,7 +10,6 @@ import com.google.android.gms.location.DetectedActivity;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
-import app.mortendahl.velib.service.data.DataStore;
 import de.greenrobot.event.EventBus;
 
 public class ActivityReceiver extends BaseBroadcastReceiver {
@@ -61,7 +60,6 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
 
             ActivityUpdateEvent event = ActivityUpdateEvent.fromPlayActivity(detectedActivity);
 
-            DataStore.record(event);
             EventBus.getDefault().post(event);  // TODO move this to context aware handler?
 
             ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();

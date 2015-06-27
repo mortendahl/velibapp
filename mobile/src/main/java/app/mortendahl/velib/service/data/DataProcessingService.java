@@ -1,15 +1,9 @@
 package app.mortendahl.velib.service.data;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
-import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm;
@@ -25,22 +19,16 @@ import java.util.Locale;
 import java.util.Set;
 
 import app.mortendahl.velib.Logger;
-import app.mortendahl.velib.R;
-import app.mortendahl.velib.VelibApplication;
+import app.mortendahl.velib.VelibContextAwareHandler;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
-import app.mortendahl.velib.library.background.BaseService;
 import app.mortendahl.velib.network.jcdecaux.Position;
-import app.mortendahl.velib.network.jcdecaux.VelibStation;
-import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
-import app.mortendahl.velib.service.guiding.ClearDestinationEvent;
 import app.mortendahl.velib.service.guiding.SetDestinationEvent;
-import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
-import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
-import app.mortendahl.velib.ui.MainActivity;
 import de.greenrobot.event.EventBus;
 
 public class DataProcessingService extends BaseIntentService {
+
+    public static final String STOREID_SUGGESTED_DESTINATIONS = "suggested_dest";
 
     public DataProcessingService() {
         setActionHandlers(
@@ -94,13 +82,16 @@ public class DataProcessingService extends BaseIntentService {
                 // store result
                 storeSuggestedDestinations(suggestedDestinations);
 
+                // broadcast update
+                EventBus.getDefault().post(new SuggestedDestinationsUpdatedEvent());
+
             }
 
             private ArrayList<PreviousDestination> loadPreviousDestinations() {
 
                 ArrayList<PreviousDestination> previousDestinations = new ArrayList<>();
 
-                for (JSONObject jsonEvent : DataStore.loadAll()) {
+                for (JSONObject jsonEvent : DataStore.getCollection(VelibContextAwareHandler.eventStoreId).loadAll()) {
                     try {
 
                         if ( ! SetDestinationEvent.class.getSimpleName().equals(jsonEvent.getString("class"))) { continue; }
@@ -154,9 +145,9 @@ public class DataProcessingService extends BaseIntentService {
 
                     try {
 
-                        List<Address> addresses = geocoder.getFromLocation(destination.position.latitude, destination.position.longitude, 1);
+                        List<Address> addresses = geocoder.getFromLocation(destination.latitude, destination.longitude, 1);
                         if (addresses != null && addresses.size() >= 1) {
-                            destination.address = addresses.get(0);
+                            destination.setAddress(addresses.get(0));
                         }
 
                     } catch (Exception e) {
@@ -170,7 +161,7 @@ public class DataProcessingService extends BaseIntentService {
             }
 
             private void storeSuggestedDestinations(ArrayList<SuggestedDestination> suggestedDestinations) {
-                DataStore.updateSuggestedDestinations(suggestedDestinations);
+                DataStore.getCollection(STOREID_SUGGESTED_DESTINATIONS).replace(suggestedDestinations);
             }
 
         }

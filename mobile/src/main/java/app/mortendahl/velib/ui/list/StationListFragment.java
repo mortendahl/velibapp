@@ -1,10 +1,6 @@
 package app.mortendahl.velib.ui.list;
 
-import android.app.Activity;
 import android.content.Context;
-import android.location.Address;
-import android.location.Geocoder;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -15,15 +11,20 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
+import app.mortendahl.velib.service.data.DataProcessingService;
 import app.mortendahl.velib.service.data.DataStore;
+import app.mortendahl.velib.service.data.SuggestedDestinationsUpdatedEvent;
 import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.service.data.SuggestedDestination;
+import de.greenrobot.event.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class StationListFragment extends Fragment implements AbsListView.OnItemClickListener {
 
@@ -69,27 +70,47 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
     public void onResume() {
         super.onResume();
         reloadList();
+        EventBus.getDefault().register(eventBusListener);
     }
 
     @Override
     public void onPause() {
-        super.onPause();
+        super.onResume();
+        EventBus.getDefault().unregister(eventBusListener);
+    }
+
+    private EventBusListener eventBusListener = new EventBusListener();
+
+    private class EventBusListener {
+
+        public void onEventMainThread(SuggestedDestinationsUpdatedEvent event) {
+            reloadList();
+        }
+
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         SuggestedDestination chosenDestination = items.get(position);
         Logger.debug(Logger.TAG_GUI, this, chosenDestination.getPrimaryAddressLine());
-        GuidingService.setDestinationAction.invoke(getActivity(), chosenDestination.position);
+        GuidingService.setDestinationAction.invoke(getActivity(), chosenDestination.latitude, chosenDestination.longitude);
     }
 
-    private void reloadList() {
+    protected void reloadList() {
 
         // clean up existing
         items.clear();
 
-        for (SuggestedDestination destination : DataStore.getSortedSuggestedDestinations()) {
-            items.add(destination);
+        List<JSONObject> rawSuggestedDestinations = DataStore.getCollection(DataProcessingService.STOREID_SUGGESTED_DESTINATIONS).loadAll();
+        for (JSONObject rawDestination : rawSuggestedDestinations) {
+            try {
+
+                SuggestedDestination destination = SuggestedDestination.fromJson(rawDestination);
+                items.add(destination);
+
+            } catch (JSONException e) {
+                Logger.error(Logger.TAG_GUI, this, e);
+            }
         }
 
         // notify adapter about changes

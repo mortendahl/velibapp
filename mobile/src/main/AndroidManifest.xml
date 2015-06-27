@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
     <application
         android:name=".VelibApplication"
         android:allowBackup="true"
@@ -56,8 +58,6 @@
 
         <!--
          TODO
-
-         <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
          <action android:name="android.location.PROVIDERS_CHANGED" />
 

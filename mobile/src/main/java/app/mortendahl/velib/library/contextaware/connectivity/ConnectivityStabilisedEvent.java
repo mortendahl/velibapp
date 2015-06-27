@@ -5,7 +5,7 @@ import android.net.ConnectivityManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import app.mortendahl.velib.service.data.BaseEvent;
+import app.mortendahl.velib.library.contextaware.BaseEvent;
 
 public class ConnectivityStabilisedEvent extends BaseEvent {
 

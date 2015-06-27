@@ -24,6 +24,7 @@ import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.contextaware.activity.ActivityManager;
 import app.mortendahl.velib.library.contextaware.geofence.GeofenceManager;
 import app.mortendahl.velib.library.contextaware.location.LocationManager;
+import app.mortendahl.velib.service.data.DataProcessingService;
 import app.mortendahl.velib.ui.list.StationListFragment;
 import app.mortendahl.velib.ui.map.MapsFragment;
 
@@ -98,12 +99,14 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
     @Override
     public void onResume() {
         super.onResume();
-        //VelibApplication.reloadStations();
 
         GeofenceManager.refreshFencesAction.invoke(this);
         ActivityManager.frequencyAction.setInterval(this, 60);
 
         LocationManager.frequencyAction.setInterval(this, 10);
+
+        DataProcessingService.refreshSuggestedDestinationsAction.invoke(this);
+
     }
 
     @Override

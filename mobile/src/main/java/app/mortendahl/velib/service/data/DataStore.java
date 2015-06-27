@@ -1,65 +1,70 @@
 package app.mortendahl.velib.service.data;
 
-import android.content.Context;
 import android.os.Environment;
-
-import com.google.maps.android.clustering.Cluster;
-import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
+import java.util.WeakHashMap;
 
 import app.mortendahl.velib.Logger;
-import app.mortendahl.velib.network.jcdecaux.Position;
-import app.mortendahl.velib.service.guiding.SetDestinationEvent;
 
 public final class DataStore {
 
-    private static Context appContext;
-    private static String filename;
+    private static WeakHashMap<String, DataStore> cachedStores = new WeakHashMap<>();
 
-    private DataStore() {}
+    public static synchronized DataStore getCollection(String id) {
+        DataStore store = cachedStores.get(id);
+        if (store == null) {
+            store = new DataStore(id);
+            cachedStores.put(id, store);
+        }
+        return store;
+    }
 
-    public static void configure(Context appContext) {
+    private final String filename;
 
-        DataStore.appContext = appContext;
+    private DataStore(String id) {
 
         try {
 
-            //File storageDir = appContext.getFilesDir();  // private storage
             File storageDir = Environment.getExternalStorageDirectory();  // public storage
-            filename = storageDir.getCanonicalPath() + "/eventstore.json";
+            filename = storageDir.getCanonicalPath() + "/" + id + ".json";
+
+            //File storageDir = appContext.getFilesDir();  // private storage
             //filename = "eventstore.json";
 
             Logger.info(Logger.TAG_SYSTEM, DataStore.class, "storing events in " + filename);
+
         } catch (Exception e) {
             throw new AssertionError(e);
         }
 
     }
 
-    public static synchronized void record(BaseEvent event) {
+    public synchronized void append(JsonFormattable object) {
+
+        try {
+
+            append(object.toJson());
+
+        } catch (JSONException e) {
+            Logger.error(Logger.TAG_SYSTEM, DataStore.class, e);
+        }
+
+    }
+
+    public synchronized void append(JSONObject event) {
 
         if (event == null) { return; }
 
         Writer w = null;
         try {
 
-            String serialisedEvent = event.toJson().toString();
+            String serialisedEvent = event.toString();
 
             w = new PrintWriter(new BufferedWriter(new FileWriter(filename, true)));
             w.write(serialisedEvent + "\n");
@@ -79,7 +84,7 @@ public final class DataStore {
 
     }
 
-    public static List<JSONObject> loadAll() {
+    public List<JSONObject> loadAll() {
 
         ArrayList<JSONObject> events = new ArrayList<>();
 
@@ -115,10 +120,32 @@ public final class DataStore {
 
     }
 
-    public static ArrayList<SuggestedDestination> getSortedSuggestedDestinations() {
+    public void replace(ArrayList<? extends JsonFormattable> collection) {
+
+        Writer w = null;
+        try {
+
+            w = new PrintWriter(new BufferedWriter(new FileWriter(filename, false)));
+
+            for (JsonFormattable object : collection) {
+                String serialisedObject = object.toJson().toString();
+                w.write(serialisedObject + "\n");
+            }
+
+            w.flush();
+
+        }
+        catch (Exception e) {
+            Logger.error(Logger.TAG_SYSTEM, DataStore.class, e);
+        }
+        finally {
+            if (w != null) {
+                try { w.close(); }
+                catch (IOException e) {}
+                w = null;
+            }
+        }
 
     }
 
-    public static void updateSuggestedDestinations(ArrayList<SuggestedDestination> suggestedDestinations) {
-    }
 }

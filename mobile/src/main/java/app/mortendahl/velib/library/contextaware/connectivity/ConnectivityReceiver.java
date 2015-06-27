@@ -13,7 +13,6 @@ import android.os.SystemClock;
 import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
-import app.mortendahl.velib.service.data.DataStore;
 import de.greenrobot.event.EventBus;
 
 public class ConnectivityReceiver extends BaseBroadcastReceiver {
@@ -114,7 +113,6 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
                     event.type = activeNetwork.getType();
                     event.ssid = currentSsid;
 
-                    DataStore.record(event);
                     EventBus.getDefault().post(event);
 
                     app.getContextAwareHandler().onConnectivityStabilised(event);
@@ -130,7 +128,6 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
                     event.type = activeNetwork.getType();
                     event.ssid = null;
 
-                    DataStore.record(event);
                     EventBus.getDefault().post(event);
 
                     app.getContextAwareHandler().onConnectivityStabilised(event);
@@ -148,7 +145,6 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
                 event.type = null;
                 event.ssid = null;
 
-                DataStore.record(event);
                 EventBus.getDefault().post(event);
 
                 app.getContextAwareHandler().onConnectivityStabilised(event);

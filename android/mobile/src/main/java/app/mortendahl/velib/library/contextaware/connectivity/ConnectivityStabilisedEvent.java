@@ -10,7 +10,7 @@ import app.mortendahl.velib.library.contextaware.BaseEvent;
 public class ConnectivityStabilisedEvent extends BaseEvent {
 
     public boolean connected;
-    public Integer type;
+    public Integer type;  // TODO use flags instead of (system) enum
     public String ssid;
 
     @Override

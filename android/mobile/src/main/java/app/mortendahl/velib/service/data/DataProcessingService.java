@@ -28,7 +28,7 @@ import de.greenrobot.event.EventBus;
 
 public class DataProcessingService extends BaseIntentService {
 
-    public static final String STOREID_SUGGESTED_DESTINATIONS = "suggested_dest";
+    public static final String STOREID_SUGGESTED_DESTINATIONS = "cache_suggested_dest";
 
     public DataProcessingService() {
         setActionHandlers(

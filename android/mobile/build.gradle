@@ -14,13 +14,13 @@ android {
         applicationId "app.mortendahl.velib"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 6
+        versionCode 7
         versionName "0.1.4"
     }
 
     signingConfigs {
         release {
-            storeFile file('../../mortendahlapp.keystore')
+            storeFile file('../../../mortendahlapp.keystore')
             keyAlias 'google play release'
             storePassword ''    // never record password here! code below for asking at compile time
             keyPassword ''      // never record password here! code below for asking at compile time

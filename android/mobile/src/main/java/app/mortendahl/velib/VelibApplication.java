@@ -13,7 +13,6 @@ import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
 
 import com.crashlytics.android.Crashlytics;
 
-import app.mortendahl.velib.service.data.DataStore;
 import de.greenrobot.event.EventBus;
 import io.fabric.sdk.android.Fabric;
 

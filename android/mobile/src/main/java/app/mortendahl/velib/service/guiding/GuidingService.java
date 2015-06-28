@@ -24,6 +24,7 @@ import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
 import app.mortendahl.velib.ui.MainActivity;
 import de.greenrobot.event.EventBus;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -34,7 +35,8 @@ public class GuidingService extends BaseService {
     public GuidingService() {
         setActionHandlers(
                 new ClearDestinationAction.Handler(this),
-                new SetDestinationAction.Handler(this)
+                new SetDestinationAction.Handler(this),
+                new BikingActivityAction.Handler(this)
         );
     }
 
@@ -107,7 +109,10 @@ public class GuidingService extends BaseService {
 
         if (destination == null) { return null; }
 
-        return Collections.min(VelibApplication.getSessionStore().stationsMap.values(), new Comparator<VelibStation>() {
+        Collection<VelibStation> stations = VelibApplication.getSessionStore().stationsMap.values();
+        if (stations.size() < 1) { return null; }
+
+        return Collections.min(stations, new Comparator<VelibStation>() {
 
             // TODO this is a very inefficient way of getting distance!
 
@@ -155,6 +160,7 @@ public class GuidingService extends BaseService {
             if (destination == null) { return; }
 
             VelibStation bestStation = getBestStationForDestination();
+            if (bestStation == null) { return; }
 
             Notification foregroundNotification = buildForegroundNotification(bestStation);
             startForeground(101, foregroundNotification);
@@ -238,6 +244,8 @@ public class GuidingService extends BaseService {
                 StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
 
                 VelibStation station = state.getBestStationForDestination();
+                if (station == null) { return null; }
+
                 Notification notification = state.buildForegroundNotification(station);
                 state.startForeground(101, notification);
 
@@ -341,8 +349,9 @@ public class GuidingService extends BaseService {
             @Override
             public Boolean handleSticky(Context context, Intent intent) {
 
-                // ignore if already running
-                if (state.destination != null) { return null; }
+//                for debugging leave this off for now
+//                // ignore if already running
+//                if (state.destination != null) { return null; }
 
                 // show notification to start guiding
                 Notification bikingNotification = buildBikingNotification(context);

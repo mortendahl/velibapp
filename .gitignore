@@ -5,11 +5,3 @@
 .DS_Store
 /build
 /captures
-
-fabric.properties
-api_keys.xml
-/mobile/src/debug/AndroidManifest.xml
-/mobile/src/release/AndroidManifest.xml
-/wear/src/debug/AndroidManifest.xml
-/wear/src/release/AndroidManifest.xml
-*.apk

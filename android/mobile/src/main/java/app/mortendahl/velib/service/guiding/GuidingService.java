@@ -10,8 +10,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
 import app.mortendahl.velib.VelibContextAwareHandler;
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
+import app.mortendahl.velib.library.background.ServiceActionHandler;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
@@ -216,7 +216,7 @@ public class GuidingService extends BaseService {
 
         }
 
-        public static class Handler extends ActionHandler {
+        public static class Handler extends ServiceActionHandler {
 
             private final GuidingService state;
 
@@ -230,7 +230,7 @@ public class GuidingService extends BaseService {
             }
 
             @Override
-            public Boolean handleSticky(Context context, Intent intent) {
+            public Boolean handle(Context context, Intent intent) {
 
                 Bundle bundle = intent.getExtras();
                 if (!bundle.containsKey(KEY_LATITUDE)) { return null; }
@@ -285,7 +285,7 @@ public class GuidingService extends BaseService {
 
         }
 
-        public static class Handler extends ActionHandler {
+        public static class Handler extends ServiceActionHandler {
 
             private final GuidingService state;
 
@@ -299,7 +299,7 @@ public class GuidingService extends BaseService {
             }
 
             @Override
-            public Boolean handleSticky(Context context, Intent intent) {
+            public Boolean handle(Context context, Intent intent) {
 
                 state.destination = null;
                 StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
@@ -333,7 +333,7 @@ public class GuidingService extends BaseService {
 
         }
 
-        public static class Handler extends ActionHandler {
+        public static class Handler extends ServiceActionHandler {
 
             private final GuidingService state;
 
@@ -347,18 +347,26 @@ public class GuidingService extends BaseService {
             }
 
             @Override
-            public Boolean handleSticky(Context context, Intent intent) {
+            public Boolean handle(Context context, Intent intent) {
 
-//                for debugging leave this off for now
-//                // ignore if already running
-//                if (state.destination != null) { return null; }
+                if (state.destination != null) {
 
-                // show notification to start guiding
-                Notification bikingNotification = buildBikingNotification(context);
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-                notificationManager.notify(404, bikingNotification);
+                    // already running so don't do anything differently
+                    return null;
 
-                return false;
+                } else {
+
+                    // not running so ..
+
+                    // .. show notification to start guiding
+                    Notification bikingNotification = buildBikingNotification(context);
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+                    notificationManager.notify(404, bikingNotification);
+
+                    // .. and go back to sleep
+                    return false;
+
+                }
             }
 
             private Notification buildBikingNotification(Context context) {

@@ -10,8 +10,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
+import app.mortendahl.velib.library.background.IntentServiceActionHandler;
 
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +75,7 @@ public class LocationManager extends BaseIntentService {
                 .build();
     }
 
-    public static class SetFrequencyActionHandler extends ActionHandler {
+    public static class SetFrequencyActionHandler extends IntentServiceActionHandler {
 
         protected static final String ACTION = "set_frequency";
         protected static final String KEY_INTERVAL = "frequency";

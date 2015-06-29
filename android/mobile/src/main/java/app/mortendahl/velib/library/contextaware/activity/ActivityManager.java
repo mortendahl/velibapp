@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.library.PrefHelper;
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
+import app.mortendahl.velib.library.background.IntentServiceActionHandler;
 
 public class ActivityManager extends BaseIntentService {
 
@@ -85,7 +85,7 @@ public class ActivityManager extends BaseIntentService {
 
         }
 
-        public static class Handler extends ActionHandler {
+        public static class Handler extends IntentServiceActionHandler {
 
             protected final ActivityManager state;
 

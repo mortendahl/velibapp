@@ -3,8 +3,8 @@ package app.mortendahl.velib.library.contextaware.power;
 import android.content.Context;
 import android.content.Intent;
 
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
+import app.mortendahl.velib.library.background.BroadcastReceiverActionHandler;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
 
 public class PowerReceiver extends BaseBroadcastReceiver {
@@ -16,7 +16,7 @@ public class PowerReceiver extends BaseBroadcastReceiver {
         );
     }
 
-    private static class PowerConnectedHandler extends ActionHandler {
+    private static class PowerConnectedHandler extends BroadcastReceiverActionHandler {
 
         @Override
         public String getAction() {
@@ -36,7 +36,7 @@ public class PowerReceiver extends BaseBroadcastReceiver {
 
     }
 
-    private static class PowerDisconnectedHandler extends ActionHandler {
+    private static class PowerDisconnectedHandler extends BroadcastReceiverActionHandler {
 
         @Override
         public String getAction() {

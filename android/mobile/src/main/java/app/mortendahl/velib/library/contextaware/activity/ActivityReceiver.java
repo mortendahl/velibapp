@@ -7,8 +7,8 @@ import android.content.Intent;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
+import app.mortendahl.velib.library.background.BroadcastReceiverActionHandler;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
 import de.greenrobot.event.EventBus;
 
@@ -21,7 +21,7 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
         );
     }
 
-    private static class BootActionHandler extends ActionHandler {
+    private static class BootActionHandler extends BroadcastReceiverActionHandler {
 
         @Override
         public String getAction() {
@@ -35,7 +35,7 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
 
     }
 
-    public static class ActivityUpdateHandler extends ActionHandler {
+    public static class ActivityUpdateHandler extends BroadcastReceiverActionHandler {
 
         private static final String ACTION = "activity_update";
 

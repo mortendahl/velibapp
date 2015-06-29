@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public abstract class BaseIntentService extends IntentService {
 
-    private volatile HashMap<String, ActionHandler> actionMap;
+    private volatile HashMap<String, IntentServiceActionHandler> actionMap;
 
     public BaseIntentService() {
         super(BaseIntentService.class.getSimpleName());
@@ -17,9 +17,9 @@ public abstract class BaseIntentService extends IntentService {
         super(name);
     }
 
-    protected void setActionHandlers(ActionHandler... actionHandlers) {
+    protected void setActionHandlers(IntentServiceActionHandler... actionHandlers) {
         actionMap = new HashMap<>();
-        for (ActionHandler actionHandler : actionHandlers) {
+        for (IntentServiceActionHandler actionHandler : actionHandlers) {
             actionMap.put(actionHandler.getAction(), actionHandler);
         }
     }
@@ -30,7 +30,7 @@ public abstract class BaseIntentService extends IntentService {
         String action = (intent != null ? intent.getAction() : null);
         if (action == null) { return; }
 
-        ActionHandler handler = actionMap.get(action);
+        IntentServiceActionHandler handler = actionMap.get(action);
         handler.handle(this, intent);
 
     }

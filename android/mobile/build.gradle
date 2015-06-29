@@ -14,7 +14,7 @@ android {
         applicationId "app.mortendahl.velib"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 7
+        versionCode 9
         versionName "0.1.4"
     }
 
@@ -28,11 +28,18 @@ android {
     }
 
     buildTypes {
+
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix ".debug"
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
+
     }
 
 }

@@ -10,11 +10,11 @@ import app.mortendahl.velib.Logger;
 
 public abstract class BaseService extends Service {
 
-    private HashMap<String, ActionHandler> actionMap;
+    private HashMap<String, ServiceActionHandler> actionMap;
 
-    protected void setActionHandlers(ActionHandler... actionHandlers) {
+    protected void setActionHandlers(ServiceActionHandler... actionHandlers) {
         actionMap = new HashMap<>();
-        for (ActionHandler actionHandler : actionHandlers) {
+        for (ServiceActionHandler actionHandler : actionHandlers) {
             actionMap.put(actionHandler.getAction(), actionHandler);
         }
     }
@@ -39,8 +39,8 @@ public abstract class BaseService extends Service {
 
         String action = (intent != null ? intent.getAction() : null);
         if (action != null) {
-            ActionHandler handler = actionMap.get(action);
-            newKeepRunning = handler.handleSticky(this, intent);
+            ServiceActionHandler handler = actionMap.get(action);
+            newKeepRunning = handler.handle(this, intent);
         }
 
         if (newKeepRunning != null && keepRunning != newKeepRunning) {

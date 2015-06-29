@@ -20,8 +20,8 @@ import java.util.Set;
 
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.VelibContextAwareHandler;
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
+import app.mortendahl.velib.library.background.IntentServiceActionHandler;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.service.guiding.SetDestinationEvent;
 import de.greenrobot.event.EventBus;
@@ -52,7 +52,7 @@ public class DataProcessingService extends BaseIntentService {
 
         }
 
-        public static class Handler extends ActionHandler {
+        public static class Handler extends IntentServiceActionHandler {
 
             @Override
             public String getAction() {

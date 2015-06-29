@@ -10,8 +10,8 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.SystemClock;
 
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
+import app.mortendahl.velib.library.background.BroadcastReceiverActionHandler;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
 import de.greenrobot.event.EventBus;
 
@@ -30,7 +30,7 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
         );
     }
 
-    private static class ConnectivityHandler extends ActionHandler {
+    private static class ConnectivityHandler extends BroadcastReceiverActionHandler {
 
         @Override
         public String getAction() {
@@ -68,7 +68,7 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
 
     }
 
-    private static class DelayedCallbackHandler extends ActionHandler {
+    private static class DelayedCallbackHandler extends BroadcastReceiverActionHandler {
 
         protected static final String ACTION_DELAYED_CALLBACK = "delayed_callback";
 

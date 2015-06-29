@@ -10,10 +10,9 @@ import com.google.android.gms.location.GeofencingEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
+import app.mortendahl.velib.library.background.BroadcastReceiverActionHandler;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
-import app.mortendahl.velib.service.data.DataStore;
 import de.greenrobot.event.EventBus;
 
 public class GeofenceReceiver extends BaseBroadcastReceiver {
@@ -25,7 +24,7 @@ public class GeofenceReceiver extends BaseBroadcastReceiver {
         );
     }
 
-    private static class BootActionHandler extends ActionHandler {
+    private static class BootActionHandler extends BroadcastReceiverActionHandler {
 
         @Override
         public String getAction() {
@@ -39,7 +38,7 @@ public class GeofenceReceiver extends BaseBroadcastReceiver {
 
     }
 
-    public static class GeofenceTransitionHandler extends ActionHandler {
+    public static class GeofenceTransitionHandler extends BroadcastReceiverActionHandler {
 
         private static final String ACTION = "geofence_transition";
 

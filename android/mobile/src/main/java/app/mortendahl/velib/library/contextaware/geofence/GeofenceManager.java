@@ -15,8 +15,8 @@ import com.google.android.gms.location.LocationServices;
 import java.util.concurrent.TimeUnit;
 
 import app.mortendahl.velib.VelibApplication;
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
+import app.mortendahl.velib.library.background.IntentServiceActionHandler;
 import app.mortendahl.velib.network.jcdecaux.Position;
 
 public class GeofenceManager extends BaseIntentService {
@@ -76,7 +76,7 @@ public class GeofenceManager extends BaseIntentService {
                 .build();
     }
 
-    public static class RefreshFencesActionHandler extends ActionHandler {
+    public static class RefreshFencesActionHandler extends IntentServiceActionHandler {
 
         protected static final String ACTION = "refresh_fences";
 

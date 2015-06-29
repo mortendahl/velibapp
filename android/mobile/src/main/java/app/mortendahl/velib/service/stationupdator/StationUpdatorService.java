@@ -11,8 +11,8 @@ import java.util.Map;
 
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.VelibApplication;
-import app.mortendahl.velib.library.background.ActionHandler;
 import app.mortendahl.velib.library.background.BaseService;
+import app.mortendahl.velib.library.background.ServiceActionHandler;
 import app.mortendahl.velib.library.background.WakeLockManager;
 import app.mortendahl.velib.network.RestRequest;
 import app.mortendahl.velib.network.jcdecaux.StationListRequest;
@@ -152,7 +152,7 @@ public class StationUpdatorService extends BaseService {
             }
         }
 
-        public static class Handler extends ActionHandler {
+        public static class Handler extends ServiceActionHandler {
 
             @Override
             public String getAction() {
@@ -166,7 +166,7 @@ public class StationUpdatorService extends BaseService {
             }
 
             @Override
-            public Boolean handleSticky(Context context, Intent intent) {
+            public Boolean handle(Context context, Intent intent) {
 
                 Bundle bundle = intent.getExtras();
                 if (!bundle.containsKey(KEY_TAG)) { throw new AssertionError("no KEY_TAG"); }

@@ -8,11 +8,11 @@ import java.util.HashMap;
 
 public abstract class BaseBroadcastReceiver extends BroadcastReceiver {
 
-    private HashMap<String, ActionHandler> actionMap;
+    private HashMap<String, BroadcastReceiverActionHandler> actionMap;
 
-    protected void setActionHandlers(ActionHandler... actionHandlers) {
+    protected void setActionHandlers(BroadcastReceiverActionHandler... actionHandlers) {
         actionMap = new HashMap<>();
-        for (ActionHandler actionHandler : actionHandlers) {
+        for (BroadcastReceiverActionHandler actionHandler : actionHandlers) {
             actionMap.put(actionHandler.getAction(), actionHandler);
         }
     }
@@ -23,7 +23,7 @@ public abstract class BaseBroadcastReceiver extends BroadcastReceiver {
         String action = (intent != null ? intent.getAction() : null);
         if (action == null) { return; }
 
-        ActionHandler handler = actionMap.get(action);
+        BroadcastReceiverActionHandler handler = actionMap.get(action);
         if (handler == null) { return; }
 
         handler.handle(context, intent);

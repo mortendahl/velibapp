@@ -8,6 +8,15 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 
 import app.mortendahl.velib.VelibContextAwareHandler;
 import app.mortendahl.velib.library.background.BaseService;
@@ -40,17 +49,35 @@ public class GuidingService extends BaseService {
         );
     }
 
+    protected GoogleApiClient googleApiClient;
+    private GoogleApiClientCallbacks googleApiClientCallbacks = new GoogleApiClientCallbacks();
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addApiIfAvailable(Wearable.API)
+                .addConnectionCallbacks(googleApiClientCallbacks)
+                .addOnConnectionFailedListener(googleApiClientCallbacks)
+                .build();
+    }
+
     @Override
     protected void onEnteringSticky() {
         Logger.debug(Logger.TAG_SERVICE, this, "onEnteringSticky");
         if (!EventBus.getDefault().isRegistered(eventBusListener)) { EventBus.getDefault().register(eventBusListener); }
+        if (!googleApiClient.isConnected()) { googleApiClient.connect(); }
     }
 
     @Override
     protected void onLeavingSticky() {
         Logger.debug(Logger.TAG_SERVICE, this, "onLeavingSticky");
         EventBus.getDefault().unregister(eventBusListener);
+        googleApiClient.disconnect();
     }
+
+
 
     protected Notification buildForegroundNotification(VelibStation station) {
 
@@ -141,9 +168,53 @@ public class GuidingService extends BaseService {
 
     }
 
+    protected void updateWearDataApi(VelibStation bestStation) {
+
+        final String BEST_DESTINATION_PATH = "/best_dest";
+        final String BEST_DESTINATION_NAME = "best_dest_name";
+        final String BEST_DESTINATION_LATITUDE = "best_dest_latitude";
+        final String BEST_DESTINATION_LONGITUDE = "best_dest_longitude";
+
+        if (googleApiClient.isConnected()) {
+
+            PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(BEST_DESTINATION_PATH);
+            putDataMapRequest.getDataMap().putString(BEST_DESTINATION_NAME, bestStation.name);
+            putDataMapRequest.getDataMap().putDouble(BEST_DESTINATION_LATITUDE, bestStation.position.latitude);
+            putDataMapRequest.getDataMap().putDouble(BEST_DESTINATION_LONGITUDE, bestStation.position.longitude);
+            PutDataRequest request = putDataMapRequest.asPutDataRequest();
+
+            Wearable.DataApi.putDataItem(googleApiClient, request)
+                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                        @Override
+                        public void onResult(DataApi.DataItemResult result) {
+                            Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "putDataItem, " + result.getStatus().getStatusMessage());
+                        }
+                    });
+
+        }
+
+    }
 
 
 
+    private class GoogleApiClientCallbacks implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+        @Override
+        public void onConnected(Bundle connectionHint) {
+
+        }
+
+        @Override
+        public void onConnectionSuspended(int cause) {
+
+        }
+
+        @Override
+        public void onConnectionFailed(ConnectionResult connectionResult) {
+
+        }
+
+    }
 
     /*** NOTE ***
      * the event bus listener is only receiving events while the service is started;
@@ -157,20 +228,29 @@ public class GuidingService extends BaseService {
 
         public void onEvent(VelibStationUpdatedEvent event) {
             Logger.debug(Logger.TAG_GUI, this, event.getClass().getSimpleName());
+
+            // ignore if no destination is currently set
             if (destination == null) { return; }
 
+            // ignore if there is no best station (maybe we don't have station data)
             VelibStation bestStation = getBestStationForDestination();
             if (bestStation == null) { return; }
 
+            // create/update foreground notification
             Notification foregroundNotification = buildForegroundNotification(bestStation);
             startForeground(101, foregroundNotification);
 
+            // notify if best station has changed
             if (previousBestStation == null || previousBestStation != bestStation.number) {
                 Notification newBestStationNotification = buildNewBestStationNotification(bestStation);
                 NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
                 notificationManager.notify(202, newBestStationNotification);
             }
             previousBestStation = bestStation.number;
+
+            // update info on any wearable devices that may be listening (now or in the future)
+            updateWearDataApi(bestStation);
+
         }
 
         public void onEvent(MonitoredVelibStationsChangedEvent event) {
@@ -178,6 +258,8 @@ public class GuidingService extends BaseService {
         }
 
     }
+
+
 
 
 

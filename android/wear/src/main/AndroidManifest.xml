@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
 
+    <!-- For location services -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <!-- Mark this app as an Android Wear app. -->
     <uses-feature android:name="android.hardware.type.watch" />
 

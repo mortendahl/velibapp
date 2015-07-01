@@ -8,20 +8,75 @@ android {
         applicationId "app.mortendahl.velib"
         minSdkVersion 21
         targetSdkVersion 22
-        versionCode 2
-        versionName "0.1.0"
+        versionCode 11
+        versionName "0.1.5"
     }
+
+    signingConfigs {
+        release {
+            storeFile file('../../../mortendahlapp.keystore')
+            keyAlias 'google play release'
+            storePassword ''    // never record password here! code below for asking at compile time
+            keyPassword ''      // never record password here! code below for asking at compile time
+        }
+    }
+
     buildTypes {
+
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix ".debug"
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+
+    }
+}
+
+def askAndSetSigningPassword() {
+
+    def password = null
+
+    // first: try command line
+    if (password == null) {
+        password = System.properties["keystorePassword"]
+    }
+
+    // second: try environment
+    if (password == null) {
+        password = System.getenv("keystorePassword")
+    }
+
+    // third: ask user
+    if (password == null) {
+        if (System.console() != null) {
+            // console available, use it to ask for password
+            password = new String(System.console().readPassword("\nEnter keystore password: "))
         }
     }
+
+    android.signingConfigs.release.storePassword = password
+    android.signingConfigs.release.keyPassword = password
+
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+
+    if (taskGraph.hasTask(':wear:assembleRelease')) {
+        askAndSetSigningPassword()
+    }
+
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.google.android.support:wearable:1.1.0'
+
     compile 'com.google.android.gms:play-services-wearable:7.5.0'
+    compile 'com.google.android.gms:play-services-location:7.5.0'
     compile 'com.google.android.gms:play-services-maps:7.5.0'
 }

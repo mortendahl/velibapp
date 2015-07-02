@@ -30,13 +30,43 @@
             android:id="@+id/map"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:name="com.google.android.gms.maps.SupportMapFragment"/>
+            android:name="com.google.android.gms.maps.MapFragment"/>
 
     </FrameLayout>
 
+    <LinearLayout
+        android:id="@+id/ambient"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:weightSum="5"
+        android:background="#000">
+
+        <TextView
+            android:id="@+id/ambient_stationname"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="2"
+            android:gravity="bottom|center"
+            android:textSize="20sp"
+            android:text="Parmentier" />
+
+        <TextView
+            android:id="@+id/ambient_stands"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3"
+            android:gravity="center"
+            android:textSize="52sp"
+            android:text="7"/>
+
+    </LinearLayout>
+
+    <!--
     <android.support.wearable.view.DismissOverlayView
         android:id="@+id/dismiss_overlay"
         android:layout_height="match_parent"
         android:layout_width="match_parent"/>
+        -->
 
 </FrameLayout>

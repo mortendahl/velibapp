@@ -8,8 +8,8 @@ android {
         applicationId "app.mortendahl.velib"
         minSdkVersion 21
         targetSdkVersion 22
-        versionCode 11
-        versionName "0.1.5"
+        versionCode 12
+        versionName "0.1.6"
     }
 
     signingConfigs {
@@ -74,7 +74,8 @@ gradle.taskGraph.whenReady { taskGraph ->
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.google.android.support:wearable:1.1.0'
+    compile 'com.google.android.support:wearable:1.2.0'
+    provided 'com.google.android.wearable:wearable:1.0.0'
 
     compile 'com.google.android.gms:play-services-wearable:7.5.0'
     compile 'com.google.android.gms:play-services-location:7.5.0'

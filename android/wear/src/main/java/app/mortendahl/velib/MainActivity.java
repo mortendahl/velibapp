@@ -4,11 +4,13 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.DismissOverlayView;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowInsets;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -20,6 +22,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -31,13 +34,17 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.List;
 
-public class MainActivity extends FragmentActivity {
+//public class MainActivity extends FragmentActivity {
+public class MainActivity extends WearableActivity {
+
+    protected final String TAG = "VelibWear";
 
     protected GoogleMap googleMap;
     private GoogleApiClient googleApiClient;
@@ -46,7 +53,11 @@ public class MainActivity extends FragmentActivity {
     private GoogleLocationListener googleLocationListener = new GoogleLocationListener();
     private GoogleDataMapListener googleDataMapListener = new GoogleDataMapListener();
 
-    private DismissOverlayView mDismissOverlay;
+//    private DismissOverlayView mDismissOverlay;
+
+    private View ambientView;
+    private TextView ambientNameTextView;
+    private TextView ambientStandsTextView;
 
     /*
     @Override
@@ -65,6 +76,8 @@ public class MainActivity extends FragmentActivity {
 
     public void onCreate(Bundle savedState) {
         super.onCreate(savedState);
+
+        setAmbientEnabled();
 
         // Set the layout. It only contains a SupportMapFragment and a DismissOverlay.
         setContentView(R.layout.activity_main);
@@ -96,13 +109,18 @@ public class MainActivity extends FragmentActivity {
             }
         });
 
-        // Obtain the DismissOverlayView and display the intro help text.
-        mDismissOverlay = (DismissOverlayView) findViewById(R.id.dismiss_overlay);
-        mDismissOverlay.setIntroText(R.string.intro_text);
-        mDismissOverlay.showIntroIfNecessary();
+//        // Obtain the DismissOverlayView and display the intro help text.
+//        mDismissOverlay = (DismissOverlayView) findViewById(R.id.dismiss_overlay);
+//        mDismissOverlay.setIntroText(R.string.intro_text);
+//        mDismissOverlay.showIntroIfNecessary();
+
+        ambientView = findViewById(R.id.ambient);
+        ambientNameTextView = (TextView) findViewById(R.id.ambient_stationname);
+        ambientStandsTextView = (TextView) findViewById(R.id.ambient_stands);
 
         // Obtain the MapFragment and set the async listener to be notified when the map is ready.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        //SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(googleMapsCallbacks);
 
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -117,46 +135,79 @@ public class MainActivity extends FragmentActivity {
     @Override
     public void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume");
         if (!googleApiClient.isConnected()) { googleApiClient.connect(); }
+        ambientView.setVisibility(View.GONE);
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        Log.d(TAG, "onPause");
         if (googleApiClient.isConnected()) { LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, googleLocationListener); }
         if (googleApiClient.isConnected()) { Wearable.DataApi.removeListener(googleApiClient, googleDataMapListener); }
         googleApiClient.disconnect();
+    }
+
+    @Override
+    public void onEnterAmbient(Bundle ambientDetails) {
+        super.onEnterAmbient(ambientDetails);
+        Log.d(TAG, "onEnterAmbient");
+
+        ambientView.setVisibility(View.VISIBLE);
+
+        ambientNameTextView.setText(stationName != null ? stationName : "--");
+        ambientStandsTextView.setText(stationStands != null ? stationStands.toString() : "--");
+    }
+
+    @Override
+    public void onUpdateAmbient() {
+        super.onUpdateAmbient();
+        Log.d(TAG, "onUpdateAmbient");
+
+        ambientNameTextView.setText(stationName != null ? stationName : "--");
+        ambientStandsTextView.setText(stationStands != null ? stationStands.toString() : "--");
+    }
+
+    @Override
+    public void onExitAmbient() {
+        super.onExitAmbient();
+        Log.d(TAG, "onExitAmbient");
+
+        ambientView.setVisibility(View.GONE);
     }
 
     protected LatLng ownLatLng = null;
     protected Marker ownPin = null;
 
     protected String stationName = null;
+    protected Integer stationStands = null;
     protected LatLng stationLatLng = null;
     protected Marker stationPin = null;
 
     protected void refreshOwnMarker() {
 
-        if (googleMap == null || ownLatLng == null) { return; }
-
-        Log.d("VelibWear", "updating own marker");
-
-        if (ownPin == null) {
-            ownPin = googleMap.addMarker(new MarkerOptions()
-                    .title("You")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                    .position(ownLatLng));
-        } else {
-            ownPin.setPosition(ownLatLng);
-        }
-
-        updateCameraPosition();
+//        if (googleMap == null || ownLatLng == null) { return; }
+//
+//        Log.d(TAG, "updating own marker");
+//
+//        if (ownPin == null) {
+//            ownPin = googleMap.addMarker(new MarkerOptions()
+//                    .title("You")
+//                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+//                    .position(ownLatLng));
+//        } else {
+//            ownPin.setPosition(ownLatLng);
+//        }
+//
+//        updateCameraPosition();
 
     }
 
     protected void updateStationMarkerFromDataItem(DataItem dataItem) {
         DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
         stationName = dataMap.getString("best_dest_name");
+        stationStands = dataMap.getInt("best_dest_stands");
         double latitude = dataMap.getDouble("best_dest_latitude");
         double longitude = dataMap.getDouble("best_dest_longitude");
         stationLatLng = new LatLng(latitude, longitude);
@@ -165,17 +216,26 @@ public class MainActivity extends FragmentActivity {
 
     protected void refreshStationMarker() {
 
-        Log.d("VelibWear", "updating station marker, " + stationName);
+        Log.d(TAG, "updating station marker, " + stationName + ", " + stationLatLng);
 
-        if (googleMap == null || stationName == null || stationLatLng == null) { return; }
+        if (googleMap == null) { return; }
+        if (stationLatLng == null) { return; }
 
         if (stationPin == null) {
             stationPin = googleMap.addMarker(new MarkerOptions()
                     .title("Station")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+                    //.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                     .position(stationLatLng));
         } else {
             stationPin.setPosition(stationLatLng);
+        }
+
+        if (stationStands == 0) {
+            stationPin.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        } else if (stationStands <= 5) {
+            stationPin.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+        } else {
+            stationPin.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
         }
 
         updateCameraPosition();
@@ -184,21 +244,30 @@ public class MainActivity extends FragmentActivity {
 
     protected void updateCameraPosition() {
 
-        if (ownLatLng != null || stationLatLng != null) {
-            LatLngBounds.Builder boundsBuilder = LatLngBounds.builder();
-            //for (VelibStation station : stations) {
-            if (ownLatLng != null) {
-                boundsBuilder.include(ownLatLng);
-            }
-            if (stationLatLng != null) {
-                boundsBuilder.include(stationLatLng);
-            }
-            //}
-            LatLngBounds bounds = boundsBuilder.build();
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
-        }
+//        if (ownLatLng != null || stationLatLng != null) {
+//            LatLngBounds.Builder boundsBuilder = LatLngBounds.builder();
+//            //for (VelibStation station : stations) {
+//            if (ownLatLng != null) {
+//                boundsBuilder.include(ownLatLng);
+//            }
+//            if (stationLatLng != null) {
+//                boundsBuilder.include(stationLatLng);
+//            }
+//            //}
+//            LatLngBounds bounds = boundsBuilder.build();
+//            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+//        }
 
-        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ownPosition, 10));
+        if (stationLatLng == null) { return; }
+
+//        LatLngBounds.Builder boundsBuilder = LatLngBounds.builder();
+//        boundsBuilder.include(stationLatLng);
+//        boundsBuilder.include(new LatLng(stationLatLng.latitude + .001f, stationLatLng.longitude + .001f));
+//        boundsBuilder.include(new LatLng(stationLatLng.latitude - .001f, stationLatLng.longitude - .001f));
+//        LatLngBounds bounds = boundsBuilder.build();
+//        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stationLatLng, 17));
 
     }
 
@@ -239,13 +308,20 @@ public class MainActivity extends FragmentActivity {
 //                        }
                     });
 
+            Log.d(TAG, "adding dataapi hooks");
             Wearable.DataApi.addListener(googleApiClient, googleDataMapListener);
-            Wearable.DataApi.getDataItem(googleApiClient, Uri.parse("/best_dest"))
-                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+            Wearable.DataApi.getDataItems(googleApiClient)
+                    .setResultCallback(new ResultCallback<DataItemBuffer>() {
                         @Override
-                        public void onResult(DataApi.DataItemResult dataItemResult) {
-                            DataItem item = dataItemResult.getDataItem();
-                            updateStationMarkerFromDataItem(item);
+                        public void onResult(DataItemBuffer dataItems) {
+                            Log.d(TAG, "onResult, " + dataItems.getCount());
+                            for (DataItem dataItem : dataItems) {
+                                String path = dataItem.getUri().getPath();
+                                Log.d(TAG, "DataItem, " + path);
+                                if ("/best_dest".equals(path)) {
+                                    updateStationMarkerFromDataItem(dataItem);
+                                }
+                            }
                         }
                     });
 
@@ -263,14 +339,15 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         public void onDataChanged(DataEventBuffer dataEvents) {
-
             List<DataEvent> events = FreezableUtils.freezeIterable(dataEvents);
             dataEvents.close();
 
-            Log.d("VelibWear", "onDataChanged");
+            Log.d(TAG, "onDataChanged");
 
             for (DataEvent event : events) {
-                String path = event.getDataItem().getUri().getPath();
+                DataItem dataItem = event.getDataItem();
+                String path = dataItem.getUri().getPath();
+                Log.d(TAG, "DataItem, " + path);
                 int type = event.getType();
                 if ("/best_dest".equals(path) && type == DataEvent.TYPE_CHANGED) {
                     DataItem item = event.getDataItem();
@@ -285,17 +362,8 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         public void onLocationChanged(Location location) {
-
             ownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-
             refreshOwnMarker();
-
-//            mMap.addMarker(new MarkerOptions().position(SYDNEY)
-//                    .title("Sydney Opera House"));
-//
-//            // Move the camera to show the marker.
-//            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(SYDNEY, 10));
-
         }
 
     }
@@ -326,7 +394,7 @@ public class MainActivity extends FragmentActivity {
         @Override
         public void onMapLongClick(LatLng latLng) {
             // Display the dismiss overlay with a button to exit this activity.
-            mDismissOverlay.show();
+//            mDismissOverlay.show();
         }
 
     }

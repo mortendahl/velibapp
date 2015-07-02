@@ -13,3 +13,4 @@ api_keys.xml
 /wear/src/debug/AndroidManifest.xml
 /wear/src/release/AndroidManifest.xml
 *.apk
+*.iml

@@ -57,7 +57,8 @@ public class GuidingService extends BaseService {
         super.onCreate();
 
         googleApiClient = new GoogleApiClient.Builder(this)
-                .addApiIfAvailable(Wearable.API)
+                .addApi(Wearable.API)
+                //.addApiIfAvailable(Wearable.API)
                 .addConnectionCallbacks(googleApiClientCallbacks)
                 .addOnConnectionFailedListener(googleApiClientCallbacks)
                 .build();
@@ -175,7 +176,7 @@ public class GuidingService extends BaseService {
         final String BEST_DESTINATION_LATITUDE = "best_dest_latitude";
         final String BEST_DESTINATION_LONGITUDE = "best_dest_longitude";
 
-        if (googleApiClient.isConnected()) {
+        if (googleApiClient.isConnected()) { // && googleApiClient.hasConnectedApi(Wearable.API)) {
 
             PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(BEST_DESTINATION_PATH);
             putDataMapRequest.getDataMap().putString(BEST_DESTINATION_NAME, bestStation.name);

@@ -173,6 +173,7 @@ public class GuidingService extends BaseService {
 
         final String BEST_DESTINATION_PATH = "/best_dest";
         final String BEST_DESTINATION_NAME = "best_dest_name";
+        final String BEST_DESTINATION_STANDS = "best_dest_stands";
         final String BEST_DESTINATION_LATITUDE = "best_dest_latitude";
         final String BEST_DESTINATION_LONGITUDE = "best_dest_longitude";
 
@@ -180,6 +181,7 @@ public class GuidingService extends BaseService {
 
             PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(BEST_DESTINATION_PATH);
             putDataMapRequest.getDataMap().putString(BEST_DESTINATION_NAME, bestStation.name);
+            putDataMapRequest.getDataMap().putInt(BEST_DESTINATION_STANDS, bestStation.availableStands);
             putDataMapRequest.getDataMap().putDouble(BEST_DESTINATION_LATITUDE, bestStation.position.latitude);
             putDataMapRequest.getDataMap().putDouble(BEST_DESTINATION_LONGITUDE, bestStation.position.longitude);
             PutDataRequest request = putDataMapRequest.asPutDataRequest();

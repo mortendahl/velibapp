@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
-import app.mortendahl.velib.library.contextaware.BaseContextAwareHandler;
 import app.mortendahl.velib.library.contextaware.BaseEvent;
 import app.mortendahl.velib.library.contextaware.ContextAwareHandler;
 import app.mortendahl.velib.library.contextaware.activity.ActivityUpdateEvent;
@@ -18,7 +17,7 @@ import app.mortendahl.velib.library.contextaware.location.LocationUpdateEvent;
 import app.mortendahl.velib.library.contextaware.power.PowerUpdateEvent;
 import app.mortendahl.velib.service.data.DataStore;
 import app.mortendahl.velib.service.guiding.GuidingService;
-import app.mortendahl.velib.ui.MainActivity;
+import app.mortendahl.velib.ui.main.MainActivity;
 
 public class VelibContextAwareHandler implements ContextAwareHandler {
 

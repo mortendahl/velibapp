@@ -8,7 +8,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -30,7 +29,7 @@ import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
 import app.mortendahl.velib.service.data.DataStore;
 import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
 import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
-import app.mortendahl.velib.ui.MainActivity;
+import app.mortendahl.velib.ui.main.MainActivity;
 import de.greenrobot.event.EventBus;
 
 import java.util.Collection;

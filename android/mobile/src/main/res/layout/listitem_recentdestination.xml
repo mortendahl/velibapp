@@ -1,0 +1,24 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="15dp"
+    android:paddingRight="10dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="5dp"
+    android:gravity="center_vertical">
+    <TextView
+        android:id="@+id/address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
+        android:textSize="16sp"
+        android:text="1 Place de la Bastille" />
+    <TextView
+        android:id="@+id/timestamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="top|right"
+        android:textSize="11sp"
+        android:text="20 June 2019" />
+</LinearLayout>

@@ -1,4 +1,4 @@
-package app.mortendahl.velib.ui.list;
+package app.mortendahl.velib.ui.main;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -11,13 +11,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
-import app.mortendahl.velib.service.data.DataProcessingService;
-import app.mortendahl.velib.service.data.DataStore;
+import app.mortendahl.velib.service.data.DataManager;
 import app.mortendahl.velib.service.data.SuggestedDestinationsUpdatedEvent;
 import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.service.data.SuggestedDestination;
@@ -26,10 +22,10 @@ import de.greenrobot.event.EventBus;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StationListFragment extends Fragment implements AbsListView.OnItemClickListener {
+public class SuggestedDestinationsFragment extends Fragment implements AbsListView.OnItemClickListener {
 
-    public static StationListFragment newInstance() {
-        StationListFragment fragment = new StationListFragment();
+    public static SuggestedDestinationsFragment newInstance() {
+        SuggestedDestinationsFragment fragment = new SuggestedDestinationsFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -40,7 +36,7 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
     protected ArrayList<SuggestedDestination> items = new ArrayList<>();
     protected ArrayAdapter<SuggestedDestination> adapter;
 
-    public StationListFragment() {}
+    public SuggestedDestinationsFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -98,20 +94,9 @@ public class StationListFragment extends Fragment implements AbsListView.OnItemC
 
     protected void reloadList() {
 
-        // clean up existing
+        // reload
         items.clear();
-
-        List<JSONObject> rawSuggestedDestinations = DataStore.getCollection(DataProcessingService.STOREID_SUGGESTED_DESTINATIONS).loadAll();
-        for (JSONObject rawDestination : rawSuggestedDestinations) {
-            try {
-
-                SuggestedDestination destination = SuggestedDestination.fromJson(rawDestination);
-                items.add(destination);
-
-            } catch (JSONException e) {
-                Logger.error(Logger.TAG_GUI, this, e);
-            }
-        }
+        items.addAll(DataManager.suggestedDestinations.getAll());
 
         // notify adapter about changes
         adapter.notifyDataSetChanged();

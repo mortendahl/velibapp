@@ -130,6 +130,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-maps:7.5.0'
     compile 'com.google.android.gms:play-services-location:7.5.0'
     compile 'com.google.maps.android:android-maps-utils:0.3+'
+    compile 'com.google.code.gson:gson:2.3.1'
 
     compile 'de.greenrobot:eventbus:2.4.0'
     compile('com.crashlytics.sdk.android:crashlytics:2.3.2@aar') {

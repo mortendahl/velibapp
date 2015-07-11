@@ -1,8 +1,8 @@
-package app.mortendahl.velib.ui.map;
+package app.mortendahl.velib.ui.main;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.maps.android.clustering.ClusterItem;
-import app.mortendahl.velib.Logger;
+
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 
 public class VelibStationMapItem implements ClusterItem {

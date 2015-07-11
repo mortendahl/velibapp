@@ -1,4 +1,4 @@
-package app.mortendahl.velib.ui.map;
+package app.mortendahl.velib.ui.main;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -19,7 +19,6 @@ import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.ui.BitmapHelper;
-import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.service.stationupdator.StationUpdatorService;

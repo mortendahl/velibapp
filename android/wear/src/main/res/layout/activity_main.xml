@@ -35,12 +35,31 @@
     </FrameLayout>
 
     <LinearLayout
+        android:id="@+id/nostation"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:weightSum="1"
+        android:background="#88007700">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:text="No station selected" />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/ambient"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:weightSum="5"
-        android:background="#000">
+        android:background="#000"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/ambient_stationname"

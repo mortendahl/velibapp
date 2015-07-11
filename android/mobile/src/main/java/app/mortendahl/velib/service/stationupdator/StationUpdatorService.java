@@ -98,7 +98,7 @@ public class StationUpdatorService extends BaseService {
         protected void updateStations(Collection<VelibStation> stations) {
             boolean added = false;
 
-            Map<Integer, VelibStation> stationsMap = VelibApplication.getSessionStore().stationsMap;
+            Map<Integer, VelibStation> stationsMap = VelibApplication.getDataStore().stationsMap;
 
             for (VelibStation station : stations) {
                 Object previousMapping = stationsMap.put(station.number, station);

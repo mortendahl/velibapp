@@ -86,16 +86,26 @@ public class LocationManager extends BaseIntentService {
         }
 
         public static class Invoker {
-            public void setInterval(Context context, int intervalInSeconds) {
+
+            private void setInterval(Context context, int intervalInSeconds) {
                 Intent intent = new Intent(context, LocationManager.class);
                 intent.setAction(ACTION);
                 intent.putExtra(KEY_INTERVAL, intervalInSeconds);
                 context.startService(intent);
             }
 
-            public void turnOff(Context context) {
-                setInterval(context, -1);
+            public void turnHigh(Context context) {
+                setInterval(context, 10);
             }
+
+            public void turnLow(Context context) {
+                setInterval(context, 5 * 60);
+            }
+
+            public void turnOff(Context context) {
+                setInterval(context, Integer.MAX_VALUE);
+            }
+
         }
 
         protected final LocationManager state;
@@ -119,7 +129,7 @@ public class LocationManager extends BaseIntentService {
             PendingIntent pendingIntent = LocationReceiver.LocationUpdateHandler.getPendingIntent(context);
             Status status;
 
-            if (intervalInSeconds > 0) {
+            if (0 < intervalInSeconds && intervalInSeconds < Integer.MAX_VALUE) {
 
                 //
                 // request updates
@@ -128,7 +138,7 @@ public class LocationManager extends BaseIntentService {
                 LocationRequest locationRequest = LocationRequest.create()
                         .setInterval(intervalInSeconds * 1000)
                         .setFastestInterval(3000)
-                        .setMaxWaitTime(2 * intervalInSeconds)
+                        .setMaxWaitTime(2 * intervalInSeconds)  // recommended by Google
                         .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                         .setSmallestDisplacement(0);  // in meters
 

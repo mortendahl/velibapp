@@ -1,4 +1,4 @@
-package app.mortendahl.velib.ui;
+package app.mortendahl.velib.ui.main;
 
 import java.util.Locale;
 
@@ -20,13 +20,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import app.mortendahl.velib.R;
-import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.library.contextaware.activity.ActivityManager;
 import app.mortendahl.velib.library.contextaware.geofence.GeofenceManager;
 import app.mortendahl.velib.library.contextaware.location.LocationManager;
 import app.mortendahl.velib.service.data.DataProcessingService;
-import app.mortendahl.velib.ui.list.StationListFragment;
-import app.mortendahl.velib.ui.map.MapsFragment;
 
 public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
 
@@ -35,7 +32,7 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         Intent intent = new Intent(context, MainActivity.class);
         intent.setAction(Intent.ACTION_MAIN);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         return pendingIntent;
 
@@ -103,16 +100,14 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         GeofenceManager.refreshFencesAction.invoke(this);
         ActivityManager.frequencyAction.setInterval(this, 60);
 
-        LocationManager.frequencyAction.setInterval(this, 10);
-
         DataProcessingService.refreshSuggestedDestinationsAction.invoke(this);
+        DataProcessingService.refreshRecentDestinationsAction.invoke(this);
 
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        LocationManager.frequencyAction.turnOff(getApplicationContext());
     }
 
     @Override
@@ -145,17 +140,11 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
     }
 
     @Override
-    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-    }
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {}
 
     @Override
-    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-    }
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {}
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
@@ -167,8 +156,10 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
 
             switch (position) {
                 case 0:
-                    return StationListFragment.newInstance();
+                    return SuggestedDestinationsFragment.newInstance();
                 case 1:
+                    return RecentDestinationsFragment.newInstance();
+                case 2:
                     return MapsFragment.newInstance();
                 default:
                     return null;
@@ -178,7 +169,7 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
 
         @Override
         public int getCount() {
-            return 2;
+            return 3;
         }
 
         @Override
@@ -188,6 +179,8 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
                 case 0:
                     return getString(R.string.title_section1).toUpperCase(l);
                 case 1:
+                    return getString(R.string.title_recentdestinations).toUpperCase(l);
+                case 2:
                     return getString(R.string.title_section2).toUpperCase(l);
             }
             return null;
@@ -214,9 +207,6 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
             return fragment;
-        }
-
-        public PlaceholderFragment() {
         }
 
         @Override

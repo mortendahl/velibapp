@@ -5,10 +5,10 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -21,21 +21,24 @@ import com.google.android.gms.wearable.Wearable;
 import app.mortendahl.velib.VelibContextAwareHandler;
 import app.mortendahl.velib.library.background.BaseService;
 import app.mortendahl.velib.library.background.ServiceActionHandler;
+import app.mortendahl.velib.library.contextaware.location.LocationManager;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
-import app.mortendahl.velib.service.MonitoredVelibStationsChangedEvent;
 import app.mortendahl.velib.service.data.DataStore;
+import app.mortendahl.velib.service.data.SuggestedDestination;
 import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
 import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
-import app.mortendahl.velib.ui.MainActivity;
+import app.mortendahl.velib.service.stationupdator.VelibStationsChangedEvent;
+import app.mortendahl.velib.ui.main.MainActivity;
 import de.greenrobot.event.EventBus;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class GuidingService extends BaseService {
 
@@ -57,8 +60,7 @@ public class GuidingService extends BaseService {
         super.onCreate();
 
         googleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                //.addApiIfAvailable(Wearable.API)
+                .addApiIfAvailable(Wearable.API)
                 .addConnectionCallbacks(googleApiClientCallbacks)
                 .addOnConnectionFailedListener(googleApiClientCallbacks)
                 .build();
@@ -80,7 +82,7 @@ public class GuidingService extends BaseService {
 
 
 
-    protected Notification buildForegroundNotification(VelibStation station) {
+    private Notification buildForegroundNotification(VelibStation station) {
 
         PendingIntent mainPendingIntent = MainActivity.getPendingIntent(this);
         PendingIntent stopPendingIntent = GuidingService.clearDestinationAction.getPendingIntent(this);
@@ -91,9 +93,9 @@ public class GuidingService extends BaseService {
 
             notification = new NotificationCompat.Builder(this)
                     .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle("Guiding")
-                    .setTicker("Guiding")
-                    .setContentText("" + station.name + "\n" + station.availableStands)
+                    .setContentTitle(getString(R.string.notification_guiding_title))
+                    .setTicker(getString(R.string.notification_guiding_title))
+                    .setContentText(getString(R.string.notification_guiding_text_station, station.name, station.availableStands))
                     .setContentIntent(mainPendingIntent)
                     .setOngoing(true)
                     .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
@@ -103,9 +105,9 @@ public class GuidingService extends BaseService {
 
             notification = new NotificationCompat.Builder(this)
                     .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle("Guiding")
-                    .setTicker("Guiding")
-                    .setContentText("Could not find best destination station")
+                    .setContentTitle(getString(R.string.notification_guiding_title))
+                    .setTicker(getString(R.string.notification_guiding_title))
+                    .setContentText(getString(R.string.notification_guiding_text_nostation))
                     .setContentIntent(mainPendingIntent)
                     .setOngoing(true)
                     .build();
@@ -116,7 +118,7 @@ public class GuidingService extends BaseService {
 
     }
 
-    protected Notification buildNewBestStationNotification(VelibStation bestStation) {
+    private Notification buildNewBestStationNotification(VelibStation bestStation) {
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
@@ -133,11 +135,9 @@ public class GuidingService extends BaseService {
 
     }
 
-    protected VelibStation getBestStationForDestination() {
+    private VelibStation getBestStationForDestination() {
 
-        if (destination == null) { return null; }
-
-        Collection<VelibStation> stations = VelibApplication.getSessionStore().stationsMap.values();
+        Collection<VelibStation> stations = VelibApplication.getDataStore().stationsMap.values();
         if (stations.size() < 1) { return null; }
 
         return Collections.min(stations, new Comparator<VelibStation>() {
@@ -169,7 +169,7 @@ public class GuidingService extends BaseService {
 
     }
 
-    protected void updateWearDataApi(VelibStation bestStation) {
+    private void updateWearDataApi(VelibStation bestStation) {
 
         final String BEST_DESTINATION_PATH = "/best_dest";
         final String BEST_DESTINATION_NAME = "best_dest_name";
@@ -177,7 +177,9 @@ public class GuidingService extends BaseService {
         final String BEST_DESTINATION_LATITUDE = "best_dest_latitude";
         final String BEST_DESTINATION_LONGITUDE = "best_dest_longitude";
 
-        if (googleApiClient.isConnected()) { // && googleApiClient.hasConnectedApi(Wearable.API)) {
+        if (!googleApiClient.isConnected()) { return; }
+
+        if (bestStation != null) {
 
             PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(BEST_DESTINATION_PATH);
             putDataMapRequest.getDataMap().putString(BEST_DESTINATION_NAME, bestStation.name);
@@ -194,7 +196,88 @@ public class GuidingService extends BaseService {
                         }
                     });
 
+        } else {
+
+//            Wearable.DataApi.getDataItems(googleApiClient)
+//                    .setResultCallback(new ResultCallback<DataItemBuffer>() {
+//                        @Override
+//                        public void onResult(DataItemBuffer dataItems) {
+//                            Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, onResult, " + dataItems.getCount());
+//                            for (DataItem dataItem : dataItems) {
+//                                Uri uri = dataItem.getUri();
+//                                String path = uri.getPath();
+//                                Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, onResult, " + path);
+//                                if ("/best_dest".equals(path)) {
+//                                    Wearable.DataApi.deleteDataItems(googleApiClient, uri)
+//                                            .setResultCallback(new ResultCallback<DataApi.DeleteDataItemsResult>() {
+//                                                @Override
+//                                                public void onResult(DataApi.DeleteDataItemsResult result) {
+//                                                    Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, " + result.getStatus().getStatusMessage());
+//                                                }
+//                                            });
+//
+//                                }
+//                            }
+//                        }
+//                    });
+
+
+            Uri uri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).path("/best_dest").build();
+            Wearable.DataApi.deleteDataItems(googleApiClient, uri)
+                    .setResultCallback(new ResultCallback<DataApi.DeleteDataItemsResult>() {
+                        @Override
+                        public void onResult(DataApi.DeleteDataItemsResult result) {
+                            // never called (service dead before it happens?) but seems to work somewhat
+                            Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, " + result.getStatus().getStatusMessage());
+                        }
+                    });
+
         }
+
+    }
+
+
+
+
+    protected void setDestination(Position destination) {
+        this.destination = destination;
+        refresh();
+    }
+
+    protected boolean isGuiding() {
+        return this.destination != null;
+    }
+
+
+
+
+    private Integer previousBestStation = null;
+
+    protected void refresh() {
+
+        VelibStation bestStation = null;
+        if (destination != null) {
+
+            bestStation = getBestStationForDestination();
+
+            // create/update foreground notification
+            Notification foregroundNotification = buildForegroundNotification(bestStation);
+            startForeground(101, foregroundNotification);
+
+            // notify if best station has changed
+            if (bestStation != null) {
+                if (previousBestStation == null || previousBestStation != bestStation.number) {
+                    Notification newBestStationNotification = buildNewBestStationNotification(bestStation);
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+                    notificationManager.notify(202, newBestStationNotification);
+                }
+                previousBestStation = bestStation.number;
+            }
+
+        }
+
+        // update info on any wearable devices that may be listening (now or in the future)
+        updateWearDataApi(bestStation);
 
     }
 
@@ -221,43 +304,18 @@ public class GuidingService extends BaseService {
 
     /*** NOTE ***
      * the event bus listener is only receiving events while the service is started;
-     * once stopped no events will be delivered anymore (since the state of a stopped
+     * once stopped no events will be delivered anymore (since the service of a stopped
      * service is not consistent). As a result, any event that should start the service
      * must be sent through the intent pipeline, and NOT through the event bus.
      */
     private class EventBusListener {
 
-        private Integer previousBestStation = null;
-
         public void onEvent(VelibStationUpdatedEvent event) {
-            Logger.debug(Logger.TAG_GUI, this, event.getClass().getSimpleName());
-
-            // ignore if no destination is currently set
-            if (destination == null) { return; }
-
-            // ignore if there is no best station (maybe we don't have station data)
-            VelibStation bestStation = getBestStationForDestination();
-            if (bestStation == null) { return; }
-
-            // create/update foreground notification
-            Notification foregroundNotification = buildForegroundNotification(bestStation);
-            startForeground(101, foregroundNotification);
-
-            // notify if best station has changed
-            if (previousBestStation == null || previousBestStation != bestStation.number) {
-                Notification newBestStationNotification = buildNewBestStationNotification(bestStation);
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-                notificationManager.notify(202, newBestStationNotification);
-            }
-            previousBestStation = bestStation.number;
-
-            // update info on any wearable devices that may be listening (now or in the future)
-            updateWearDataApi(bestStation);
-
+            refresh();
         }
 
-        public void onEvent(MonitoredVelibStationsChangedEvent event) {
-            Logger.debug(Logger.TAG_GUI, this, event.getClass().getSimpleName());
+        public void onEvent(VelibStationsChangedEvent event) {
+            refresh();
         }
 
     }
@@ -287,7 +345,11 @@ public class GuidingService extends BaseService {
             }
 
             public PendingIntent getPendingIntent(Context context, Position destination) {
-                Intent intent = getIntent(context, destination.latitude, destination.longitude);
+                return getPendingIntent(context, destination.latitude, destination.longitude);
+            }
+
+            public PendingIntent getPendingIntent(Context context, double latitude, double longitude) {
+                Intent intent = getIntent(context, latitude, longitude);
                 return PendingIntent.getService(context, 0, intent, 0);
             }
 
@@ -324,19 +386,14 @@ public class GuidingService extends BaseService {
                 double latitude = bundle.getDouble(KEY_LATITUDE);
                 double longitude = bundle.getDouble(KEY_LONGITUDE);
                 Position destination = new Position(latitude, longitude);
-                state.destination = destination;
-
-                StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
-
-                VelibStation station = state.getBestStationForDestination();
-                if (station == null) { return null; }
-
-                Notification notification = state.buildForegroundNotification(station);
-                state.startForeground(101, notification);
+                state.setDestination(destination);
 
                 SetDestinationEvent event = new SetDestinationEvent(destination);
                 DataStore.getCollection(VelibContextAwareHandler.eventStoreId).append(event);
                 EventBus.getDefault().post(event);
+
+                LocationManager.frequencyAction.turnHigh(context);
+                StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
 
                 return true;
 
@@ -386,7 +443,8 @@ public class GuidingService extends BaseService {
             @Override
             public Boolean handle(Context context, Intent intent) {
 
-                state.destination = null;
+                state.setDestination(null);
+                LocationManager.frequencyAction.turnOff(context);
                 StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
 
                 ClearDestinationEvent event = new ClearDestinationEvent();
@@ -420,10 +478,10 @@ public class GuidingService extends BaseService {
 
         public static class Handler extends ServiceActionHandler {
 
-            private final GuidingService state;
+            private final GuidingService service;
 
-            public Handler(GuidingService state) {
-                this.state = state;
+            public Handler(GuidingService service) {
+                this.service = service;
             }
 
             @Override
@@ -434,7 +492,7 @@ public class GuidingService extends BaseService {
             @Override
             public Boolean handle(Context context, Intent intent) {
 
-                if (state.destination != null) {
+                if (service.isGuiding()) {
 
                     // already running so don't do anything differently
                     return null;
@@ -458,19 +516,38 @@ public class GuidingService extends BaseService {
 
                 PendingIntent mainPendingIntent = MainActivity.getPendingIntent(context);
 
-                Position workPosition = VelibApplication.POSITION_WORK;
-                PendingIntent workPendingIntent = GuidingService.setDestinationAction.getPendingIntent(context, workPosition);
-
-                Position gymPosition = VelibApplication.POSITION_GYM;
-                PendingIntent gymPendingIntent = GuidingService.setDestinationAction.getPendingIntent(context, gymPosition);
-
                 NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context)
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("Biking")
-                        .setContentText("Biking")
-                        .setContentIntent(mainPendingIntent)
-                        .addAction(android.R.drawable.ic_media_play, "Work", workPendingIntent)
-                        .addAction(android.R.drawable.ic_media_play, "Gym", gymPendingIntent);
+                        .setContentTitle(context.getString(R.string.notification_biking_detected_title))
+                        .setContentText(context.getString(R.string.notification_biking_detected_text))
+                        .setContentIntent(mainPendingIntent);
+
+                List<SuggestedDestination> predictedDestinations = VelibApplication.getDataStore().predictedDestinations.getAll();
+
+                // add actions for handheld
+                if (predictedDestinations.size() >= 1) {
+                    SuggestedDestination mostLikelyDestination = predictedDestinations.get(0);
+                    // extract info
+                    double latitude = mostLikelyDestination.latitude;
+                    double longitude = mostLikelyDestination.longitude;
+                    String title = context.getString(R.string.notification_mostlikelydestination_title, mostLikelyDestination);
+                    // build pending intent and add as action to notification
+                    PendingIntent pendingIntent = GuidingService.setDestinationAction.getPendingIntent(context, latitude, longitude);
+                    notificationBuilder.addAction(android.R.drawable.ic_media_play, title, pendingIntent);
+                }
+
+                // add actions for wearable (this will prevent handheld actions from being shown)
+                NotificationCompat.WearableExtender wearableExtender = new NotificationCompat.WearableExtender();
+                for (SuggestedDestination predictedDestination : predictedDestinations) {
+                    // extract info
+                    double latitude = predictedDestination.latitude;
+                    double longitude = predictedDestination.longitude;
+                    String title = predictedDestination.getPrimaryAddressLine();
+                    // build pending intent and add as action to notification
+                    PendingIntent pendingIntent = GuidingService.setDestinationAction.getPendingIntent(context, latitude, longitude);
+                    wearableExtender.addAction(new NotificationCompat.Action(android.R.drawable.ic_media_play, title, pendingIntent));
+                }
+                notificationBuilder.extend(wearableExtender);
 
                 return notificationBuilder.build();
 

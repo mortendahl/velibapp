@@ -1,11 +1,9 @@
 package app.mortendahl.velib;
 
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.annotation.Nullable;
 import android.support.wearable.activity.WearableActivity;
-import android.support.wearable.view.DismissOverlayView;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowInsets;
@@ -24,10 +22,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.wearable.DataApi;
@@ -58,6 +54,8 @@ public class MainActivity extends WearableActivity {
     private View ambientView;
     private TextView ambientNameTextView;
     private TextView ambientStandsTextView;
+
+    private View nostationView;
 
     /*
     @Override
@@ -114,6 +112,8 @@ public class MainActivity extends WearableActivity {
 //        mDismissOverlay.setIntroText(R.string.intro_text);
 //        mDismissOverlay.showIntroIfNecessary();
 
+        nostationView = findViewById(R.id.nostation);
+
         ambientView = findViewById(R.id.ambient);
         ambientNameTextView = (TextView) findViewById(R.id.ambient_stationname);
         ambientStandsTextView = (TextView) findViewById(R.id.ambient_stands);
@@ -137,6 +137,8 @@ public class MainActivity extends WearableActivity {
         super.onResume();
         Log.d(TAG, "onResume");
         if (!googleApiClient.isConnected()) { googleApiClient.connect(); }
+
+        nostationView.setVisibility(station == null ? View.VISIBLE : View.GONE);
         ambientView.setVisibility(View.GONE);
     }
 
@@ -156,8 +158,8 @@ public class MainActivity extends WearableActivity {
 
         ambientView.setVisibility(View.VISIBLE);
 
-        ambientNameTextView.setText(stationName != null ? stationName : "--");
-        ambientStandsTextView.setText(stationStands != null ? stationStands.toString() : "--");
+        ambientNameTextView.setText(station != null ? station.name : "--");
+        ambientStandsTextView.setText(station != null ? "" + station.stands : "--");
     }
 
     @Override
@@ -165,8 +167,8 @@ public class MainActivity extends WearableActivity {
         super.onUpdateAmbient();
         Log.d(TAG, "onUpdateAmbient");
 
-        ambientNameTextView.setText(stationName != null ? stationName : "--");
-        ambientStandsTextView.setText(stationStands != null ? stationStands.toString() : "--");
+        ambientNameTextView.setText(station != null ? station.name : "--");
+        ambientStandsTextView.setText(station != null ? "" + station.stands : "--");
     }
 
     @Override
@@ -178,12 +180,7 @@ public class MainActivity extends WearableActivity {
     }
 
     protected LatLng ownLatLng = null;
-    protected Marker ownPin = null;
-
-    protected String stationName = null;
-    protected Integer stationStands = null;
-    protected LatLng stationLatLng = null;
-    protected Marker stationPin = null;
+    protected Marker ownMarker = null;
 
     protected void refreshOwnMarker() {
 
@@ -191,58 +188,83 @@ public class MainActivity extends WearableActivity {
 //
 //        Log.d(TAG, "updating own marker");
 //
-//        if (ownPin == null) {
-//            ownPin = googleMap.addMarker(new MarkerOptions()
+//        if (ownMarker == null) {
+//            ownMarker = googleMap.addMarker(new MarkerOptions()
 //                    .title("You")
-//                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+//                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
 //                    .position(ownLatLng));
 //        } else {
-//            ownPin.setPosition(ownLatLng);
+//            ownMarker.setPosition(ownLatLng);
 //        }
-//
-//        updateCameraPosition();
 
     }
 
-    protected void updateStationMarkerFromDataItem(DataItem dataItem) {
+    protected Station station = null;
+    protected Marker stationMarker = null;
+
+    protected void setStation(@Nullable Station station) {
+        this.station = station;
+        nostationView.setVisibility(station == null ? View.VISIBLE : View.GONE);
+        refreshStationMarker();
+        updateCameraPosition();
+    }
+
+    protected Station extractStationFromDataMap(DataItem dataItem) {
+
         DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
-        stationName = dataMap.getString("best_dest_name");
-        stationStands = dataMap.getInt("best_dest_stands");
+        Station station = new Station();
+
+        station.name = dataMap.getString("best_dest_name");
+        station.stands = dataMap.getInt("best_dest_stands");
         double latitude = dataMap.getDouble("best_dest_latitude");
         double longitude = dataMap.getDouble("best_dest_longitude");
-        stationLatLng = new LatLng(latitude, longitude);
-        refreshStationMarker();
+        station.latlng = new LatLng(latitude, longitude);
+
+        return station;
+
     }
 
     protected void refreshStationMarker() {
 
-        Log.d(TAG, "updating station marker, " + stationName + ", " + stationLatLng);
-
         if (googleMap == null) { return; }
-        if (stationLatLng == null) { return; }
 
-        if (stationPin == null) {
-            stationPin = googleMap.addMarker(new MarkerOptions()
-                    .title("Station")
-                    //.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                    .position(stationLatLng));
+        if (station == null) {
+
+            Log.d(TAG, "deleting station marker, " + stationMarker);
+
+            if (stationMarker != null) {
+                stationMarker.remove();
+                stationMarker = null;
+
+                // should not be needed, but sometimes the map is not updating properly so let's just try various things
+                googleMap.clear();
+            }
+
         } else {
-            stationPin.setPosition(stationLatLng);
-        }
 
-        if (stationStands == 0) {
-            stationPin.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-        } else if (stationStands <= 5) {
-            stationPin.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
-        } else {
-            stationPin.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-        }
+            Log.d(TAG, "updating station marker, " + station);
 
-        updateCameraPosition();
+            if (stationMarker == null) {
+                stationMarker = googleMap.addMarker(new MarkerOptions()
+                        .title("Station")
+                        .position(station.latlng));
+            } else {
+                stationMarker.setPosition(station.latlng);
+            }
+
+            if (station.stands == 0) {
+                stationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            } else if (station.stands <= 5) {
+                stationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+            } else {
+                stationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            }
+
+        }
 
     }
 
-    protected void updateCameraPosition() {
+    private void updateCameraPosition() {
 
 //        if (ownLatLng != null || stationLatLng != null) {
 //            LatLngBounds.Builder boundsBuilder = LatLngBounds.builder();
@@ -258,7 +280,9 @@ public class MainActivity extends WearableActivity {
 //            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
 //        }
 
-        if (stationLatLng == null) { return; }
+        Log.d(TAG, "updating camera position, " + station);
+
+        if (station == null) { return; }
 
 //        LatLngBounds.Builder boundsBuilder = LatLngBounds.builder();
 //        boundsBuilder.include(stationLatLng);
@@ -267,7 +291,7 @@ public class MainActivity extends WearableActivity {
 //        LatLngBounds bounds = boundsBuilder.build();
 //        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
 
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stationLatLng, 17));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(station.latlng, 16));
 
     }
 
@@ -315,13 +339,15 @@ public class MainActivity extends WearableActivity {
                         @Override
                         public void onResult(DataItemBuffer dataItems) {
                             Log.d(TAG, "onResult, " + dataItems.getCount());
+                            Station station = null;
                             for (DataItem dataItem : dataItems) {
                                 String path = dataItem.getUri().getPath();
                                 Log.d(TAG, "DataItem, " + path);
                                 if ("/best_dest".equals(path)) {
-                                    updateStationMarkerFromDataItem(dataItem);
+                                    station = extractStationFromDataMap(dataItem);
                                 }
                             }
+                            setStation(station);
                         }
                     });
 
@@ -344,16 +370,22 @@ public class MainActivity extends WearableActivity {
 
             Log.d(TAG, "onDataChanged");
 
+            Station station = null;
             for (DataEvent event : events) {
                 DataItem dataItem = event.getDataItem();
                 String path = dataItem.getUri().getPath();
                 Log.d(TAG, "DataItem, " + path);
                 int type = event.getType();
-                if ("/best_dest".equals(path) && type == DataEvent.TYPE_CHANGED) {
-                    DataItem item = event.getDataItem();
-                    updateStationMarkerFromDataItem(item);
+                if ("/best_dest".equals(path)) {
+                    if (type == DataEvent.TYPE_CHANGED) {
+                        DataItem item = event.getDataItem();
+                        station = extractStationFromDataMap(item);
+                    } else if (type == DataEvent.TYPE_DELETED) {
+                        station = null;
+                    }
                 }
             }
+            setStation(station);
         }
 
     }
@@ -362,8 +394,9 @@ public class MainActivity extends WearableActivity {
 
         @Override
         public void onLocationChanged(Location location) {
-            ownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-            refreshOwnMarker();
+//            ownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+//            refreshOwnMarker();
+//            updateCameraPosition();
         }
 
     }
@@ -379,22 +412,15 @@ public class MainActivity extends WearableActivity {
             // Set the long click listener as a way to exit the map.
             googleMap.setOnMapLongClickListener(this);
 
-//            // Add a marker with a title that is shown in its info window.
-//            mMap.addMarker(new MarkerOptions().position(SYDNEY)
-//                    .title("Sydney Opera House"));
-//
-//            // Move the camera to show the marker.
-//            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(SYDNEY, 10));
-
             refreshOwnMarker();
             refreshStationMarker();
+            updateCameraPosition();
 
         }
 
         @Override
         public void onMapLongClick(LatLng latLng) {
-            // Display the dismiss overlay with a button to exit this activity.
-//            mDismissOverlay.show();
+            updateCameraPosition();
         }
 
     }

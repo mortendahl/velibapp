@@ -2,7 +2,15 @@
     <string name="app_name">Velib Watch</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_main">MainActivity</string>
-    <string name="title_section1">Suggestions</string>
+    <string name="title_section1">Predicted</string>
     <string name="title_section2">Station Map</string>
     <string name="action_settings">Settings</string>
+    <string name="title_recentdestinations">Recent</string>
+
+    <string name="notification_biking_detected_title">Biking</string>
+    <string name="notification_biking_detected_text">Biking</string>
+    <string name="notification_mostlikelydestination_title">%s</string>
+    <string name="notification_guiding_title">Guiding</string>
+    <string name="notification_guiding_text_station">%1$s %2$d</string>
+    <string name="notification_guiding_text_nostation">Looking for best destination station</string>
 </resources>

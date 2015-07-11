@@ -14,8 +14,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataItem;
-import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -200,26 +198,37 @@ public class GuidingService extends BaseService {
 
         } else {
 
-            Wearable.DataApi.getDataItems(googleApiClient)
-                    .setResultCallback(new ResultCallback<DataItemBuffer>() {
-                        @Override
-                        public void onResult(DataItemBuffer dataItems) {
-                            Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, onResult, " + dataItems.getCount());
-                            for (DataItem dataItem : dataItems) {
-                                Uri uri = dataItem.getUri();
-                                String path = uri.getPath();
-                                Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, onResult, " + path);
-                                if ("/best_dest".equals(path)) {
-                                    Wearable.DataApi.deleteDataItems(googleApiClient, uri)
-                                            .setResultCallback(new ResultCallback<DataApi.DeleteDataItemsResult>() {
-                                                @Override
-                                                public void onResult(DataApi.DeleteDataItemsResult result) {
-                                                    Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, " + result.getStatus().getStatusMessage());
-                                                }
-                                            });
+//            Wearable.DataApi.getDataItems(googleApiClient)
+//                    .setResultCallback(new ResultCallback<DataItemBuffer>() {
+//                        @Override
+//                        public void onResult(DataItemBuffer dataItems) {
+//                            Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, onResult, " + dataItems.getCount());
+//                            for (DataItem dataItem : dataItems) {
+//                                Uri uri = dataItem.getUri();
+//                                String path = uri.getPath();
+//                                Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, onResult, " + path);
+//                                if ("/best_dest".equals(path)) {
+//                                    Wearable.DataApi.deleteDataItems(googleApiClient, uri)
+//                                            .setResultCallback(new ResultCallback<DataApi.DeleteDataItemsResult>() {
+//                                                @Override
+//                                                public void onResult(DataApi.DeleteDataItemsResult result) {
+//                                                    Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, " + result.getStatus().getStatusMessage());
+//                                                }
+//                                            });
+//
+//                                }
+//                            }
+//                        }
+//                    });
 
-                                }
-                            }
+
+            Uri uri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).path("/best_dest").build();
+            Wearable.DataApi.deleteDataItems(googleApiClient, uri)
+                    .setResultCallback(new ResultCallback<DataApi.DeleteDataItemsResult>() {
+                        @Override
+                        public void onResult(DataApi.DeleteDataItemsResult result) {
+                            // never called (service dead before it happens?) but seems to work somewhat
+                            Logger.debug(Logger.TAG_SERVICE, GuidingService.class, "deleteDataItems, " + result.getStatus().getStatusMessage());
                         }
                     });
 
@@ -383,7 +392,7 @@ public class GuidingService extends BaseService {
                 DataStore.getCollection(VelibContextAwareHandler.eventStoreId).append(event);
                 EventBus.getDefault().post(event);
 
-                LocationManager.frequencyAction.turnOn(context);
+                LocationManager.frequencyAction.turnHigh(context);
                 StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
 
                 return true;

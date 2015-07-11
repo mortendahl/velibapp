@@ -87,16 +87,19 @@ public class LocationManager extends BaseIntentService {
 
         public static class Invoker {
 
-            @Deprecated
-            public void setInterval(Context context, int intervalInSeconds) {
+            private void setInterval(Context context, int intervalInSeconds) {
                 Intent intent = new Intent(context, LocationManager.class);
                 intent.setAction(ACTION);
                 intent.putExtra(KEY_INTERVAL, intervalInSeconds);
                 context.startService(intent);
             }
 
-            public void turnOn(Context context) {
+            public void turnHigh(Context context) {
                 setInterval(context, 10);
+            }
+
+            public void turnLow(Context context) {
+                setInterval(context, 5 * 60);
             }
 
             public void turnOff(Context context) {

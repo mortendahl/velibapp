@@ -22,39 +22,20 @@ import java.util.LinkedHashSet;
 public class VelibApplication extends BaseApplication implements ContextAwareApplication {
 
 	public static Position POSITION_WORK = new Position(48.8672898, 2.3520185);
-	public static Position POSITION_GYM = new Position(48.866944, 2.366344);
 
-
-	private ContextAwareHandler contextAwareHandler = new VelibContextAwareHandler();
+	private static final VelibDataStore dataStore = new VelibDataStore();
+	private final ContextAwareHandler contextAwareHandler = new VelibContextAwareHandler();
 
 	@Override
 	public ContextAwareHandler getContextAwareHandler() {
 		return contextAwareHandler;
 	}
 
-
-
-
-	public static class SessionData {
-		public LinkedHashMap<Integer, VelibStation> stationsMap = new LinkedHashMap<>();
-	}
-
-	private static final SessionData sessionData = new SessionData();
-
-	public static SessionData getSessionStore() {
-		return sessionData;
+	public static VelibDataStore getDataStore() {
+		return dataStore;
 	}
 
 
-
-
-
-	public static LinkedHashSet<Integer> monitoredVelibStation = new LinkedHashSet<>();
-
-	public static void addMonitoredStation(int station) {
-		monitoredVelibStation.add(station);
-		EventBus.getDefault().post(new MonitoredVelibStationsChangedEvent());
-	}
 
 	@Override
     public void onCreate() {

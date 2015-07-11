@@ -267,7 +267,7 @@ public class MainActivity extends WearableActivity {
 //        LatLngBounds bounds = boundsBuilder.build();
 //        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
 
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stationLatLng, 17));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stationLatLng, 15));
 
     }
 

@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
-import app.mortendahl.velib.service.data.DataManager;
+import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.service.data.SuggestedDestinationsUpdatedEvent;
 import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.service.data.SuggestedDestination;
@@ -96,7 +96,7 @@ public class SuggestedDestinationsFragment extends Fragment implements AbsListVi
 
         // reload
         items.clear();
-        items.addAll(DataManager.suggestedDestinations.getAll());
+        items.addAll(VelibApplication.getDataStore().predictedDestinations.getAll());
 
         // notify adapter about changes
         adapter.notifyDataSetChanged();

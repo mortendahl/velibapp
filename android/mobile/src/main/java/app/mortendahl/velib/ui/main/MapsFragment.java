@@ -18,6 +18,7 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
+import app.mortendahl.velib.library.contextaware.location.LocationManager;
 import app.mortendahl.velib.library.ui.BitmapHelper;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.service.guiding.GuidingService;
@@ -90,7 +91,6 @@ public class MapsFragment extends SupportMapFragment {
         @Override
         public boolean onClusterItemClick(VelibStationMapItem item) {
             Logger.debug(Logger.TAG_GUI, this, "onClusterItemClick, " + item.getPosition());
-            VelibApplication.addMonitoredStation(item.number);
             return false;
         }
 
@@ -203,7 +203,7 @@ public class MapsFragment extends SupportMapFragment {
         Logger.debug(Logger.TAG_GUI, this, "reloadStationMarkers");
 
         clusterManager.clearItems();
-        Collection<VelibStation> stations = VelibApplication.getSessionStore().stationsMap.values();
+        Collection<VelibStation> stations = VelibApplication.getDataStore().stationsMap.values();
         if (stations.isEmpty()) { return; }
 
         previousReloadTimestamp = currentTimestamp;

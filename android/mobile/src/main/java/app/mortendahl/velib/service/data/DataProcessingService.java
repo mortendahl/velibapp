@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import app.mortendahl.velib.VelibApplication;
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.VelibContextAwareHandler;
 import app.mortendahl.velib.library.background.BaseIntentService;
@@ -117,7 +118,7 @@ public class DataProcessingService extends BaseIntentService {
             }
 
             private void storeSuggestedDestinations(ArrayList<SuggestedDestination> suggestedDestinations) {
-                DataManager.suggestedDestinations.replace(suggestedDestinations);
+                VelibApplication.getDataStore().predictedDestinations.replace(suggestedDestinations);
             }
 
         }
@@ -183,7 +184,7 @@ public class DataProcessingService extends BaseIntentService {
                 reverseGeocode(context, recentDestinations);
 
                 // store result
-                DataManager.recentDestinations.replace(recentDestinations);
+                VelibApplication.getDataStore().recentDestinations.replace(recentDestinations);
 
                 // broadcast update
                 EventBus.getDefault().post(new RecentDestinationsUpdatedEvent());

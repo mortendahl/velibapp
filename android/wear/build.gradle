@@ -8,8 +8,8 @@ android {
         applicationId "app.mortendahl.velib"
         minSdkVersion 21
         targetSdkVersion 22
-        versionCode 12
-        versionName "0.1.6"
+        versionCode 13
+        versionName "0.1.7"
     }
 
     signingConfigs {

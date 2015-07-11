@@ -32,7 +32,7 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         Intent intent = new Intent(context, MainActivity.class);
         intent.setAction(Intent.ACTION_MAIN);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         return pendingIntent;
 
@@ -100,8 +100,6 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         GeofenceManager.refreshFencesAction.invoke(this);
         ActivityManager.frequencyAction.setInterval(this, 60);
 
-        LocationManager.frequencyAction.setInterval(this, 10);
-
         DataProcessingService.refreshSuggestedDestinationsAction.invoke(this);
         DataProcessingService.refreshRecentDestinationsAction.invoke(this);
 
@@ -110,7 +108,6 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
     @Override
     public void onPause() {
         super.onPause();
-        LocationManager.frequencyAction.turnOff(getApplicationContext());
     }
 
     @Override

@@ -17,7 +17,8 @@ import java.util.List;
 
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
-import app.mortendahl.velib.service.data.DataManager;
+import app.mortendahl.velib.VelibApplication;
+import app.mortendahl.velib.VelibDataStore;
 import app.mortendahl.velib.service.data.RecentDestinationsUpdatedEvent;
 import app.mortendahl.velib.service.data.SuggestedDestination;
 import app.mortendahl.velib.service.guiding.GuidingService;
@@ -97,7 +98,7 @@ public class RecentDestinationsFragment extends Fragment implements AbsListView.
 
         // reload
         items.clear();
-        items.addAll(DataManager.recentDestinations.getAll());
+        items.addAll(VelibApplication.getDataStore().recentDestinations.getAll());
 
         // notify adapter about changes
         adapter.notifyDataSetChanged();

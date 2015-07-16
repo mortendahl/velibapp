@@ -14,7 +14,7 @@ android {
         applicationId "app.mortendahl.velib"
         minSdkVersion 16
         targetSdkVersion 22
-        versionCode 13
+        versionCode 14
         versionName "0.1.7"
     }
 

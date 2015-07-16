@@ -344,13 +344,18 @@ public class GuidingService extends BaseService {
                 context.startService(intent);
             }
 
+            @Deprecated
             public PendingIntent getPendingIntent(Context context, Position destination) {
                 return getPendingIntent(context, destination.latitude, destination.longitude);
             }
 
             public PendingIntent getPendingIntent(Context context, double latitude, double longitude) {
+                return getPendingIntent(context, latitude, longitude, 0);
+            }
+
+            public PendingIntent getPendingIntent(Context context, double latitude, double longitude, int identifier) {
                 Intent intent = getIntent(context, latitude, longitude);
-                return PendingIntent.getService(context, 0, intent, 0);
+                return PendingIntent.getService(context, identifier, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             }
 
             private Intent getIntent(Context context, double latitude, double longitude) {
@@ -538,13 +543,15 @@ public class GuidingService extends BaseService {
 
                 // add actions for wearable (this will prevent handheld actions from being shown)
                 NotificationCompat.WearableExtender wearableExtender = new NotificationCompat.WearableExtender();
-                for (SuggestedDestination predictedDestination : predictedDestinations) {
+                for (int i = 0; i < predictedDestinations.size(); i++) {
+                    SuggestedDestination predictedDestination = predictedDestinations.get(i);
                     // extract info
                     double latitude = predictedDestination.latitude;
                     double longitude = predictedDestination.longitude;
+                    int identifier = i;
                     String title = predictedDestination.getPrimaryAddressLine();
                     // build pending intent and add as action to notification
-                    PendingIntent pendingIntent = GuidingService.setDestinationAction.getPendingIntent(context, latitude, longitude);
+                    PendingIntent pendingIntent = GuidingService.setDestinationAction.getPendingIntent(context, latitude, longitude, identifier);
                     wearableExtender.addAction(new NotificationCompat.Action(android.R.drawable.ic_media_play, title, pendingIntent));
                 }
                 notificationBuilder.extend(wearableExtender);

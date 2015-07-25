@@ -10,7 +10,6 @@ import com.google.android.gms.location.FusedLocationProviderApi;
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
 import app.mortendahl.velib.library.background.BroadcastReceiverActionHandler;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
-import de.greenrobot.event.EventBus;
 
 public class LocationReceiver extends BaseBroadcastReceiver {
 
@@ -30,8 +29,8 @@ public class LocationReceiver extends BaseBroadcastReceiver {
 
         @Override
         public void handle(Context context, Intent intent) {
-            // don't do anything
-            //LocationManager.frequencyAction.setInterval(context, -1);
+            // TODO there is a race condition here if another part of the system requests active in-between reboot and this call
+            LocationManager.frequencyAction.turnPassive(context);
         }
 
     }
@@ -58,8 +57,6 @@ public class LocationReceiver extends BaseBroadcastReceiver {
             if (location == null) { return; }
 
             LocationUpdateEvent event = new LocationUpdateEvent(location);
-
-            EventBus.getDefault().post(event);
 
             ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();
             app.getContextAwareHandler().onLocationUpdate(event);

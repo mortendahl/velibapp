@@ -22,7 +22,6 @@ import android.view.ViewGroup;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.library.contextaware.activity.ActivityManager;
 import app.mortendahl.velib.library.contextaware.geofence.GeofenceManager;
-import app.mortendahl.velib.library.contextaware.location.LocationManager;
 import app.mortendahl.velib.service.data.DataProcessingService;
 
 public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
@@ -97,8 +96,8 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
     public void onResume() {
         super.onResume();
 
-        GeofenceManager.refreshFencesAction.invoke(this);
-        ActivityManager.frequencyAction.setInterval(this, 60);
+//        GeofenceManager.refreshFencesAction.invoke(this);
+//        ActivityManager.frequencyAction.turnOn(this);
 
         DataProcessingService.refreshSuggestedDestinationsAction.invoke(this);
         DataProcessingService.refreshRecentDestinationsAction.invoke(this);

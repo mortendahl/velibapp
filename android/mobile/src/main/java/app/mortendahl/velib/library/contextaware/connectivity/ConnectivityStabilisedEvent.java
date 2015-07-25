@@ -1,6 +1,7 @@
 package app.mortendahl.velib.library.contextaware.connectivity;
 
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -10,17 +11,17 @@ import app.mortendahl.velib.library.contextaware.BaseEvent;
 public class ConnectivityStabilisedEvent extends BaseEvent {
 
     public boolean connected;
-    public Integer type;  // TODO use flags instead of (system) enum
+    public ConnectivityType type;
     public String ssid;
 
     @Override
     public String toString() {
 
         if (connected) {
-            if (type != null && type == ConnectivityManager.TYPE_WIFI) {
-                return String.format("connectivity connected, wifi (%d), %s", type, ssid);
+            if (type != null && type == ConnectivityType.WIFI) {
+                return String.format("connectivity connected, wifi (%s), %s", type, ssid);
             } else {
-                return String.format("connectivity connected, other (%d)", type);
+                return String.format("connectivity connected, other (%s)", type);
             }
         } else {
             return String.format("connectivity disconnected");
@@ -32,9 +33,20 @@ public class ConnectivityStabilisedEvent extends BaseEvent {
     public JSONObject toJson() throws JSONException {
         JSONObject json = super.toJson();
         json.put("connected", connected);
-        json.put("type", type);
+        json.put("type", type.toString());
         json.put("ssid", ssid);
         return json;
     }
 
+    public static ConnectivityType mapConnectivityType(NetworkInfo network) {
+
+        if (network == null || !network.isConnectedOrConnecting()) {
+            return ConnectivityType.NONE;
+        } else if (network.getType() == ConnectivityManager.TYPE_WIFI) {
+            return ConnectivityType.WIFI;
+        } else {
+            return ConnectivityType.OTHER;
+        }
+
+    }
 }

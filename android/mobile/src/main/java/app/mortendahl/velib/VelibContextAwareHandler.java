@@ -18,6 +18,7 @@ import app.mortendahl.velib.library.contextaware.power.PowerUpdateEvent;
 import app.mortendahl.velib.service.data.DataStore;
 import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.ui.main.MainActivity;
+import de.greenrobot.event.EventBus;
 
 public class VelibContextAwareHandler implements ContextAwareHandler {
 
@@ -37,10 +38,9 @@ public class VelibContextAwareHandler implements ContextAwareHandler {
 
         record(event);
 
-        Context context = VelibApplication.getCachedAppContext();
-
         if (event.onBicycle && event.confidence > 50) {
             // let the GuidingService handle the event since it knows best what it's currently doing
+            Context context = VelibApplication.getCachedAppContext();
             GuidingService.bikingActivityAction.invoke(context);
         }
 
@@ -48,7 +48,13 @@ public class VelibContextAwareHandler implements ContextAwareHandler {
 
     @Override
     public void onLocationUpdate(LocationUpdateEvent event) {
+
         record(event);
+
+        EventBus.getDefault().post(event);
+
+        //Logger.debug(Logger.TAG_SYSTEM, this, "bearing: " + event.location.getBearing());
+
     }
 
     @Override

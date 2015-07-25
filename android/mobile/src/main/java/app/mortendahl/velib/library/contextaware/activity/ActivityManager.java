@@ -68,19 +68,20 @@ public class ActivityManager extends BaseIntentService {
 
         public static class Invoker {
 
-            public void refresh(Context context) {
+            public void reload(Context context) {
                 Intent intent = new Intent(context, ActivityManager.class);
                 intent.setAction(ACTION);
                 context.startService(intent);
             }
 
-            public void setInterval(Context context, int intervalInSeconds) {
-                PrefHelper.saveInteger(PREFKEY_INTERVAL, intervalInSeconds);
-                refresh(context);
+            public void turnOn(Context context) {
+                PrefHelper.saveInteger(PREFKEY_INTERVAL, 60);
+                reload(context);
             }
 
             public void turnOff(Context context) {
-                setInterval(context, -1);
+                PrefHelper.saveInteger(PREFKEY_INTERVAL, -1);
+                reload(context);
             }
 
         }

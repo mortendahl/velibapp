@@ -30,7 +30,7 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
 
         @Override
         public void handle(Context context, Intent intent) {
-            ActivityManager.frequencyAction.setInterval(context, 60);
+            ActivityManager.frequencyAction.turnOn(context);
         }
 
     }

@@ -6,6 +6,9 @@ import app.mortendahl.velib.library.background.BaseApplication;
 import app.mortendahl.velib.library.PrefHelper;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
 import app.mortendahl.velib.library.contextaware.ContextAwareHandler;
+import app.mortendahl.velib.library.contextaware.activity.ActivityManager;
+import app.mortendahl.velib.library.contextaware.geofence.GeofenceManager;
+import app.mortendahl.velib.library.contextaware.location.LocationManager;
 import app.mortendahl.velib.network.jcdecaux.Position;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.network.ServerConnection;
@@ -20,8 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
 public class VelibApplication extends BaseApplication implements ContextAwareApplication {
-
-	public static Position POSITION_WORK = new Position(48.8672898, 2.3520185);
 
 	private static final VelibDataStore dataStore = new VelibDataStore();
 	private final ContextAwareHandler contextAwareHandler = new VelibContextAwareHandler();
@@ -52,6 +53,11 @@ public class VelibApplication extends BaseApplication implements ContextAwareApp
 
         // log all bus events
         EventBus.getDefault().register(new EventBusDebugger());
+
+		// activate context-awareness (in case the app was just installed)
+		LocationManager.frequencyAction.turnPassive(this);
+		ActivityManager.frequencyAction.turnOn(this);
+		GeofenceManager.refreshFencesAction.invoke(this);
 
 	}
 

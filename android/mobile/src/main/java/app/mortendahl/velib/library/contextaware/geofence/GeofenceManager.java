@@ -21,6 +21,8 @@ import app.mortendahl.velib.network.jcdecaux.Position;
 
 public class GeofenceManager extends BaseIntentService {
 
+    protected static final Position POSITION_WORK = new Position(48.8672898, 2.3520185);
+
     public static final RefreshFencesActionHandler.Invoker refreshFencesAction = new RefreshFencesActionHandler.Invoker();
 
     public GeofenceManager() {
@@ -109,7 +111,7 @@ public class GeofenceManager extends BaseIntentService {
 
             final int radius = 100;  // min recommended by Google
 
-            Position workPosition = VelibApplication.POSITION_WORK;
+            Position workPosition = POSITION_WORK;
             installGeofence(context, "work", workPosition.latitude, workPosition.longitude, radius);
 
         }

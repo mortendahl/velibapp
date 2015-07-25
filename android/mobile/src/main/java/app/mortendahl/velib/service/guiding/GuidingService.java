@@ -397,7 +397,7 @@ public class GuidingService extends BaseService {
                 DataStore.getCollection(VelibContextAwareHandler.eventStoreId).append(event);
                 EventBus.getDefault().post(event);
 
-                LocationManager.frequencyAction.turnHigh(context);
+                LocationManager.frequencyAction.turnActive(context);
                 StationUpdatorService.updatesAction.request(context, GuidingService.class.getSimpleName());
 
                 return true;
@@ -449,7 +449,7 @@ public class GuidingService extends BaseService {
             public Boolean handle(Context context, Intent intent) {
 
                 state.setDestination(null);
-                LocationManager.frequencyAction.turnOff(context);
+                LocationManager.frequencyAction.turnPassive(context);
                 StationUpdatorService.updatesAction.remove(context, GuidingService.class.getSimpleName());
 
                 ClearDestinationEvent event = new ClearDestinationEvent();

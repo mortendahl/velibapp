@@ -141,7 +141,7 @@ public class MapsFragment extends SupportMapFragment {
         @Override
         protected void onBeforeClusterItemRendered(VelibStationMapItem mapItem, MarkerOptions markerOptions) {
 
-            // doesnt not refresh properly; seems we really need to re-add all markers
+            // doesnt not reload properly; seems we really need to re-add all markers
             //VelibStation velibStation = VelibApplication.stationsMap.get(mapItem.number);
             //int availableStands = (velibStation != null ? velibStation.availableStands : -1);
 
@@ -211,7 +211,7 @@ public class MapsFragment extends SupportMapFragment {
         for (VelibStation station : stations) {
             clusterManager.addItem(VelibStationMapItem.fromStation(station));
         }
-        // force refresh
+        // force reload
         clusterManager.cluster();
 
 

@@ -34,6 +34,7 @@ public class LocationUpdateEvent extends BaseEvent {
             json.put("latitude", location.getLatitude());
             json.put("longitude", location.getLongitude());
             json.put("accuracy", location.getAccuracy());
+            json.put("bearing", location.getBearing());
         }
         return json;
     }

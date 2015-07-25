@@ -110,7 +110,7 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
 
                     ConnectivityStabilisedEvent event = new ConnectivityStabilisedEvent();
                     event.connected = true;
-                    event.type = activeNetwork.getType();
+                    event.type = ConnectivityStabilisedEvent.mapConnectivityType(activeNetwork);
                     event.ssid = currentSsid;
 
                     EventBus.getDefault().post(event);
@@ -125,7 +125,7 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
 
                     ConnectivityStabilisedEvent event = new ConnectivityStabilisedEvent();
                     event.connected = true;
-                    event.type = activeNetwork.getType();
+                    event.type = ConnectivityStabilisedEvent.mapConnectivityType(activeNetwork);
                     event.ssid = null;
 
                     EventBus.getDefault().post(event);
@@ -142,7 +142,7 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
 
                 ConnectivityStabilisedEvent event = new ConnectivityStabilisedEvent();
                 event.connected = false;
-                event.type = null;
+                event.type = ConnectivityType.NONE;
                 event.ssid = null;
 
                 EventBus.getDefault().post(event);

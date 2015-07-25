@@ -5,13 +5,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.core.CrashlyticsCore;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+
+import app.mortendahl.velib.library.PrefHelper;
 import app.mortendahl.velib.library.background.BaseIntentService;
 import app.mortendahl.velib.library.background.IntentServiceActionHandler;
+import io.fabric.sdk.android.Fabric;
 
 import java.util.concurrent.TimeUnit;
 
@@ -78,7 +83,11 @@ public class LocationManager extends BaseIntentService {
     public static class SetFrequencyActionHandler extends IntentServiceActionHandler {
 
         protected static final String ACTION = "set_frequency";
-        protected static final String KEY_INTERVAL = "frequency";
+        protected static final String PREFKEY_LEVEL = "location_update_level";
+
+        private static final int LEVEL_OFF =    0;
+        private static final int LEVEL_LOW =    1;
+        private static final int LEVEL_HIGH =   2;
 
         @Override
         public String getAction() {
@@ -87,23 +96,25 @@ public class LocationManager extends BaseIntentService {
 
         public static class Invoker {
 
-            private void setInterval(Context context, int intervalInSeconds) {
+            public void reload(Context context) {
                 Intent intent = new Intent(context, LocationManager.class);
                 intent.setAction(ACTION);
-                intent.putExtra(KEY_INTERVAL, intervalInSeconds);
                 context.startService(intent);
             }
 
-            public void turnHigh(Context context) {
-                setInterval(context, 10);
+            public void turnActive(Context context) {
+                PrefHelper.saveInteger(PREFKEY_LEVEL, LEVEL_HIGH);
+                reload(context);
             }
 
-            public void turnLow(Context context) {
-                setInterval(context, 5 * 60);
+            public void turnPassive(Context context) {
+                PrefHelper.saveInteger(PREFKEY_LEVEL, LEVEL_LOW);  // alternatively LEVEL_OFF
+                reload(context);
             }
 
             public void turnOff(Context context) {
-                setInterval(context, Integer.MAX_VALUE);
+                PrefHelper.saveInteger(PREFKEY_LEVEL, LEVEL_OFF);
+                reload(context);
             }
 
         }
@@ -120,38 +131,26 @@ public class LocationManager extends BaseIntentService {
             // either no-op if already connected or wait until new connection established
             state.googleApiClient.blockingConnect(10000, TimeUnit.MILLISECONDS);
 
-            int intervalInSeconds = intent.getIntExtra(KEY_INTERVAL, 0);
+            if (!state.googleApiClient.isConnected()) {
+                CrashlyticsCore.getInstance().logException(new Exception("google client did not connect, ignoring request"));
+                return;
+            }
 
-            // todo checks could be improved
-            if (!state.googleApiClient.isConnected()) { return; }
-            if (intervalInSeconds == 0) { return; }
+            int level = PrefHelper.loadInteger(PREFKEY_LEVEL, LEVEL_OFF);  // default is OFF
+            LocationRequest locationRequest = buildLocationRequest(level);
 
             PendingIntent pendingIntent = LocationReceiver.LocationUpdateHandler.getPendingIntent(context);
             Status status;
+            if (locationRequest != null) {
 
-            if (0 < intervalInSeconds && intervalInSeconds < Integer.MAX_VALUE) {
-
-                //
                 // request updates
-                //
-
-                LocationRequest locationRequest = LocationRequest.create()
-                        .setInterval(intervalInSeconds * 1000)
-                        .setFastestInterval(3000)
-                        .setMaxWaitTime(2 * intervalInSeconds)  // recommended by Google
-                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                        .setSmallestDisplacement(0);  // in meters
-
                 status = LocationServices.FusedLocationApi
                         .requestLocationUpdates(state.googleApiClient, locationRequest, pendingIntent)
                         .await(10000, TimeUnit.MILLISECONDS);
 
             } else {
 
-                //
                 // remove updates
-                //
-
                 status = LocationServices.FusedLocationApi
                         .removeLocationUpdates(state.googleApiClient, pendingIntent)
                         .await(10000, TimeUnit.MILLISECONDS);
@@ -169,8 +168,47 @@ public class LocationManager extends BaseIntentService {
 
         }
 
+        /**
+         * Returning null indicates that we don't want any location updates.
+         */
+        private LocationRequest buildLocationRequest(int level) {
+
+            if (level == LEVEL_LOW) {
+
+                int intervalInSeconds = 5 * 60;     // 5 min
+                int fastestIntervalInSeconds = 60;  // 1 min
+
+                LocationRequest locationRequest = LocationRequest.create()
+                        .setInterval(intervalInSeconds * 1000)
+                        .setFastestInterval(fastestIntervalInSeconds * 1000)
+                        .setMaxWaitTime(2 * intervalInSeconds)  // recommended by Google
+                        .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
+                        .setSmallestDisplacement(50);  // in meters
+
+                return locationRequest;
+
+            } else if (level == LEVEL_HIGH) {
+
+                int intervalInSeconds = 10;
+                int fastestIntervalInSeconds = 3;
+
+                LocationRequest locationRequest = LocationRequest.create()
+                        .setInterval(intervalInSeconds * 1000)
+                        .setFastestInterval(fastestIntervalInSeconds * 1000)
+                        .setMaxWaitTime(2 * intervalInSeconds)  // recommended by Google
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                        .setSmallestDisplacement(0);  // in meters
+
+                return locationRequest;
+
+            } else {  // including LEVEL_LOW
+
+                return null;
+
+            }
+
+        }
+
     }
-
-
 
 }

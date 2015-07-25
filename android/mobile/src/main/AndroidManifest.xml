@@ -37,6 +37,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.settings.SettingsActivity"
+            android:parentActivityName=".ui.main.MainActivity" />
+
         <service
             android:name=".service.guiding.GuidingService"
             android:enabled="true"

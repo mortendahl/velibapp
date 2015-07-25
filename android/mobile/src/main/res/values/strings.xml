@@ -13,4 +13,9 @@
     <string name="notification_guiding_title">Guiding</string>
     <string name="notification_guiding_text_station">%1$s %2$d</string>
     <string name="notification_guiding_text_nostation">Looking for best destination station</string>
+    <string name="action_privacy">Privacy</string>
+    <string name="url_github">https://github.com/mortendahl/velibapp</string>
+    <string name="about">About</string>
+    <string name="url_privacy">https://github.com/mortendahl/velibapp</string>
+    <string name="privacy">Privacy</string>
 </resources>

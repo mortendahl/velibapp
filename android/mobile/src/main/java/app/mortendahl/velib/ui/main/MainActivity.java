@@ -1,28 +1,27 @@
 package app.mortendahl.velib.ui.main;
 
-import java.util.Locale;
-
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
-import android.view.LayoutInflater;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+
+import java.util.Locale;
 
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.library.contextaware.activity.ActivityManager;
 import app.mortendahl.velib.library.contextaware.geofence.GeofenceManager;
+import app.mortendahl.velib.library.contextaware.location.LocationManager;
 import app.mortendahl.velib.service.data.DataProcessingService;
+import app.mortendahl.velib.ui.settings.SettingsActivity;
 
 public class MainActivity extends ActionBarActivity implements ActionBar.TabListener {
 
@@ -96,11 +95,13 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
     public void onResume() {
         super.onResume();
 
-//        GeofenceManager.refreshFencesAction.invoke(this);
-//        ActivityManager.frequencyAction.turnOn(this);
-
         DataProcessingService.refreshSuggestedDestinationsAction.invoke(this);
         DataProcessingService.refreshRecentDestinationsAction.invoke(this);
+
+        // activate context-awareness (especially for case where the app was just installed)
+        LocationManager.frequencyAction.turnPassive(this);
+        ActivityManager.frequencyAction.turnOn(this);
+        GeofenceManager.refreshFencesAction.invoke(this);
 
     }
 
@@ -123,8 +124,8 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startActivity(SettingsActivity.getLaunchIntent(this));
             return true;
         }
 
@@ -133,8 +134,7 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-        // When the given tab is selected, switch to the corresponding page in
-        // the ViewPager.
+        // switch to the corresponding page in the ViewPager
         mViewPager.setCurrentItem(tab.getPosition());
     }
 
@@ -183,35 +183,6 @@ public class MainActivity extends ActionBarActivity implements ActionBar.TabList
                     return getString(R.string.title_section2).toUpperCase(l);
             }
             return null;
-        }
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
         }
     }
 

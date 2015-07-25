@@ -30,8 +30,7 @@ import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.service.data.DataStore;
 import app.mortendahl.velib.service.data.SuggestedDestination;
 import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
-import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
-import app.mortendahl.velib.service.stationupdator.VelibStationsChangedEvent;
+import app.mortendahl.velib.service.stationupdator.VelibStationsUpdatedEvent;
 import app.mortendahl.velib.ui.main.MainActivity;
 import de.greenrobot.event.EventBus;
 
@@ -137,7 +136,7 @@ public class GuidingService extends BaseService {
 
     private VelibStation getBestStationForDestination() {
 
-        Collection<VelibStation> stations = VelibApplication.getDataStore().stationsMap.values();
+        Collection<VelibStation> stations = VelibApplication.getDataStore().stations.getAll();
         if (stations.size() < 1) { return null; }
 
         return Collections.min(stations, new Comparator<VelibStation>() {
@@ -310,11 +309,7 @@ public class GuidingService extends BaseService {
      */
     private class EventBusListener {
 
-        public void onEvent(VelibStationUpdatedEvent event) {
-            refresh();
-        }
-
-        public void onEvent(VelibStationsChangedEvent event) {
+        public void onEvent(VelibStationsUpdatedEvent event) {
             refresh();
         }
 

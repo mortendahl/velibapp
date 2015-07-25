@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Clustering</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true&libraries=visualization"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script>
+
+var map;
+
+function initialize() {
+	
+	$.getJSON('http://localhost:8080/points')
+	.done(function(data) {
+		
+		console.log('done')
+		
+		var points = data;
+				
+		// find centroid
+		centroid_lat = 0.0;
+		centroid_lng = 0.0;		
+		for (var i=0; i<points.length; i++) {
+			var point = points[i];	
+			centroid_lat += point['latitude']
+			centroid_lng += point['longitude']
+		}
+		var centroid = new google.maps.LatLng(centroid_lat / points.length, centroid_lng / points.length);
+		
+		// initialise map object
+		var mapOptions = {
+			zoom: 13,
+			center: centroid,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		};
+		map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+		// add journey points
+		for (var i=0; i<points.length; i++) {
+			var point = points[i];
+			var bearing = point['bearing'];
+			
+			if (bearing != 0) {
+				
+				var marker = new google.maps.Marker({
+				    position: new google.maps.LatLng(point['latitude'], point['longitude']),
+				    icon: {
+				     	path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+						rotation: bearing,
+				     	scale: 5
+				    },
+				    draggable: false,
+				    map: map
+				  });
+				  
+			} else {
+				
+				// bearing was not known
+				
+				var marker = new google.maps.Marker({
+				    position: new google.maps.LatLng(point['latitude'], point['longitude']),
+				    icon: {
+				     	path: google.maps.SymbolPath.CIRCLE,
+				     	scale: 5
+				    },
+				    draggable: false,
+				    map: map
+				  });
+				/*
+				var pointMarker = new google.maps.Circle({
+				    map: map,
+					center: new google.maps.LatLng(point['latitude'], point['longitude']),
+					radius: 5,
+				    fillColor: '#000',
+					fillOpacity: 1,
+					strokeColor: '#000',
+					strokeOpacity: 0,
+					title: 	'bearing:' + point['bearing']
+				});
+				*/
+				  
+			}
+		}
+		
+ 	})
+	.error(function(data) {
+		console.log("error");	
+		console.log(data);
+	});	
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>

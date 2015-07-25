@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:key="pref_sync"
+        android:title="foo"
+        android:summary="bar"
+        android:defaultValue="true"
+        android:enabled="false" />
+
+    <CheckBoxPreference
+        android:key="pref_background_activity"
+        android:title="Detect biking activity"
+        android:summary="Automatically detect when biking. This has a small impact on battery life."
+        android:defaultValue="true"
+        android:enabled="false" />
+
+    <CheckBoxPreference
+        android:key="pref_biking_location"
+        android:title="Record biking locations"
+        android:summary="By storing high-precision location data during bike rides the app can automatically learn more about your typical destinations and hence improve predictions."
+        android:defaultValue="true"
+        android:enabled="false" />
+
+    <CheckBoxPreference
+        android:key="pref_background_location"
+        android:title="Continuously record locations"
+        android:summary="Recording low-precision location data through-out the day helps give some context to certain locations, such as home and work. This has a small impact on battery life."
+        android:defaultValue="true"
+        android:enabled="false" />
+
+    <Preference
+        android:title="@string/privacy"
+        android:summary="bar" >
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="@string/url_privacy" />
+    </Preference>
+
+    <Preference
+        android:title="@string/about"
+        android:summary="bar" >
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="@string/url_github" />
+    </Preference>
+
+</PreferenceScreen>

@@ -10,13 +10,17 @@ import app.mortendahl.velib.service.data.SuggestedDestination;
 
 public class VelibDataStore {
 
-    public LinkedHashMap<Integer, VelibStation> stationsMap = new LinkedHashMap<>();
+    public final BaseStoredList<VelibStation> stations = new GsonStoredList<VelibStation>("cache_stations") {
+        @Override
+        protected Type getType() {
+            return VelibStation.class;
+        }
+    };
 
     public final BaseStoredList<SuggestedDestination> predictedDestinations = new GsonStoredList<SuggestedDestination>("cache_suggested_destinations") {
         @Override
         protected Type getType() {
             return SuggestedDestination.class;
-            //return new TypeToken<SuggestedDestination>() {}.getType();
         }
     };
 

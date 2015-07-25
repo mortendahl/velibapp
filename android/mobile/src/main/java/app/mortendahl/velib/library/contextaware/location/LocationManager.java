@@ -190,7 +190,7 @@ public class LocationManager extends BaseIntentService {
             } else if (level == LEVEL_HIGH) {
 
                 int intervalInSeconds = 10;
-                int fastestIntervalInSeconds = 3;
+                int fastestIntervalInSeconds = 5;
 
                 LocationRequest locationRequest = LocationRequest.create()
                         .setInterval(intervalInSeconds * 1000)

@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import app.mortendahl.velib.Logger;
@@ -100,7 +102,7 @@ public abstract class BaseStoredList<T> {
 
     }
 
-    public synchronized void replace(List<? extends T> items) {
+    public synchronized void replace(Collection<? extends T> items) {
 
         Writer w = null;
         try {

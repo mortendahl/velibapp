@@ -54,11 +54,6 @@ public class VelibApplication extends BaseApplication implements ContextAwareApp
         // log all bus events
         EventBus.getDefault().register(new EventBusDebugger());
 
-		// activate context-awareness (in case the app was just installed)
-		LocationManager.frequencyAction.turnPassive(this);
-		ActivityManager.frequencyAction.turnOn(this);
-		GeofenceManager.refreshFencesAction.invoke(this);
-
 	}
 
     private class EventBusDebugger {

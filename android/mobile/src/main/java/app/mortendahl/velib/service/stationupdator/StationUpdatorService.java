@@ -7,7 +7,6 @@ import android.os.Handler;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Map;
 
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.VelibApplication;
@@ -71,7 +70,7 @@ public class StationUpdatorService extends BaseService {
 
         private void reloadStations() {
 
-            Logger.debug(Logger.TAG_SYSTEM, VelibApplication.class, "reloadStations" + (currentRequest!=null?", skipping" :""));
+            Logger.debug(Logger.TAG_SYSTEM, VelibApplication.class, "reloadStations" + (currentRequest != null ? ", skipping" : ""));
             if (currentRequest != null) { return; }  // wait for any current request to finish
 
             currentRequest = new StationListRequest();
@@ -96,21 +95,8 @@ public class StationUpdatorService extends BaseService {
         }
 
         protected void updateStations(Collection<VelibStation> stations) {
-            boolean added = false;
-
-            Map<Integer, VelibStation> stationsMap = VelibApplication.getDataStore().stationsMap;
-
-            for (VelibStation station : stations) {
-                Object previousMapping = stationsMap.put(station.number, station);
-                added = added || previousMapping == null;
-            }
-
-            if (added) {
-                EventBus.getDefault().post(new VelibStationsChangedEvent());
-            } else {
-                EventBus.getDefault().post(new VelibStationUpdatedEvent());
-            }
-
+            VelibApplication.getDataStore().stations.replace(stations);
+            EventBus.getDefault().post(new VelibStationsUpdatedEvent());
         }
 
     }

@@ -15,19 +15,18 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.view.DefaultClusterRenderer;
+
+import java.util.Collection;
+
 import app.mortendahl.velib.Logger;
 import app.mortendahl.velib.R;
 import app.mortendahl.velib.VelibApplication;
-import app.mortendahl.velib.library.contextaware.location.LocationManager;
 import app.mortendahl.velib.library.ui.BitmapHelper;
 import app.mortendahl.velib.network.jcdecaux.VelibStation;
 import app.mortendahl.velib.service.guiding.GuidingService;
 import app.mortendahl.velib.service.stationupdator.StationUpdatorService;
-import app.mortendahl.velib.service.stationupdator.VelibStationUpdatedEvent;
-import app.mortendahl.velib.service.stationupdator.VelibStationsChangedEvent;
+import app.mortendahl.velib.service.stationupdator.VelibStationsUpdatedEvent;
 import de.greenrobot.event.EventBus;
-
-import java.util.Collection;
 
 public class MapsFragment extends SupportMapFragment {
 
@@ -54,24 +53,21 @@ public class MapsFragment extends SupportMapFragment {
     @Override
     public void onResume() {
         super.onResume();
-        StationUpdatorService.updatesAction.request(getActivity(), getClass().getSimpleName());
         EventBus.getDefault().register(eventBusListener);
+        StationUpdatorService.updatesAction.request(getActivity(), getClass().getSimpleName());
+        //reloadStationMarkers(); todo triggers exception when map layout is not completed
     }
 
     @Override
     public void onPause() {
         super.onResume();
-        StationUpdatorService.updatesAction.remove(getActivity(), getClass().getSimpleName());
         EventBus.getDefault().unregister(eventBusListener);
+        StationUpdatorService.updatesAction.remove(getActivity(), getClass().getSimpleName());
     }
 
     private class EventBusListener {
 
-        public void onEvent(VelibStationsChangedEvent event) {
-            reloadStationMarkers();
-        }
-
-        public void onEvent(VelibStationUpdatedEvent event) {
+        public void onEvent(VelibStationsUpdatedEvent event) {
             reloadStationMarkers();
         }
 
@@ -192,10 +188,10 @@ public class MapsFragment extends SupportMapFragment {
             map.setOnMapClickListener(mapListener);
         } else {
 
-            if (currentTimestamp - previousReloadTimestamp < 10000) {
-                Logger.debug(Logger.TAG_GUI, this, "reloadStationMarkers, skipping");
-                return;
-            }
+//            if (currentTimestamp - previousReloadTimestamp < 10000) {
+//                Logger.debug(Logger.TAG_GUI, this, "reloadStationMarkers, skipping");
+//                return;
+//            }
 
         }
 
@@ -203,7 +199,7 @@ public class MapsFragment extends SupportMapFragment {
         Logger.debug(Logger.TAG_GUI, this, "reloadStationMarkers");
 
         clusterManager.clearItems();
-        Collection<VelibStation> stations = VelibApplication.getDataStore().stationsMap.values();
+        Collection<VelibStation> stations = VelibApplication.getDataStore().stations.getAll();
         if (stations.isEmpty()) { return; }
 
         previousReloadTimestamp = currentTimestamp;

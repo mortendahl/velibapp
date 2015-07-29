@@ -16,6 +16,14 @@
 
 var map;
 
+var colors = ['#000', '#00f', '#f00', '#0f0', '#ff0', '#f0f', '#0ff'];
+
+function getColor(t) {
+	d = Math.floor(t / (1000 * 60 * 60 * 24));
+	color = colors[d % colors.length];
+	return color;
+}
+
 function initialize() {
 	
 	$.getJSON('http://localhost:8080/points')
@@ -55,7 +63,9 @@ function initialize() {
 				    icon: {
 				     	path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
 						rotation: bearing,
-				     	scale: 5
+				     	scale: 5,
+						strokeColor: getColor(point['timestamp']),
+						fillColor: getColor(point['timestamp'])
 				    },
 				    draggable: false,
 				    map: map
@@ -69,7 +79,9 @@ function initialize() {
 				    position: new google.maps.LatLng(point['latitude'], point['longitude']),
 				    icon: {
 				     	path: google.maps.SymbolPath.CIRCLE,
-				     	scale: 5
+				     	scale: 5,
+						strokeColor: getColor(point['timestamp']),
+						fillColor: getColor(point['timestamp'])
 				    },
 				    draggable: false,
 				    map: map

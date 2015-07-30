@@ -60,6 +60,7 @@ function initialize() {
 				
 				var marker = new google.maps.Marker({
 				    position: new google.maps.LatLng(point['latitude'], point['longitude']),
+                    title: (point['accuracy'] ? '~' + point['accuracy'] + 'm' : 'n/a'),
 				    icon: {
 				     	path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
 						rotation: bearing,
@@ -77,6 +78,7 @@ function initialize() {
 				
 				var marker = new google.maps.Marker({
 				    position: new google.maps.LatLng(point['latitude'], point['longitude']),
+                    title: (point['accuracy'] ? '~' + point['accuracy'] + 'm' : 'n/a'),
 				    icon: {
 				     	path: google.maps.SymbolPath.CIRCLE,
 				     	scale: 5,

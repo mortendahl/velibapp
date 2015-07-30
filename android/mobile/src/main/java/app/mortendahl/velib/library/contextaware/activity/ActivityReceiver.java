@@ -7,6 +7,8 @@ import android.content.Intent;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
+import java.util.List;
+
 import app.mortendahl.velib.library.background.BaseBroadcastReceiver;
 import app.mortendahl.velib.library.background.BroadcastReceiverActionHandler;
 import app.mortendahl.velib.library.contextaware.ContextAwareApplication;
@@ -56,11 +58,8 @@ public class ActivityReceiver extends BaseBroadcastReceiver {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
             if (result == null) { return; }
 
-            DetectedActivity detectedActivity = result.getMostProbableActivity();
-
-            ActivityUpdateEvent event = ActivityUpdateEvent.fromPlayActivity(detectedActivity);
-
-            EventBus.getDefault().post(event);  // TODO move this to context aware handler?
+            List<DetectedActivity> activities = result.getProbableActivities();
+            ActivityUpdateEvent event = ActivityUpdateEvent.fromPlayActivities(activities);
 
             ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();
             app.getContextAwareHandler().onActivityUpdate(event);

@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
+import com.google.android.gms.location.DetectedActivity;
+
 import app.mortendahl.velib.library.contextaware.BaseEvent;
 import app.mortendahl.velib.library.contextaware.ContextAwareHandler;
 import app.mortendahl.velib.library.contextaware.activity.ActivityUpdateEvent;
@@ -38,7 +40,10 @@ public class VelibContextAwareHandler implements ContextAwareHandler {
 
         record(event);
 
-        if (event.onBicycle && event.confidence > 50) {
+        EventBus.getDefault().post(event);
+
+        int onBicycleConfidence = event.getConfidence(DetectedActivity.ON_BICYCLE);
+        if (onBicycleConfidence > 50) {
             // let the GuidingService handle the event since it knows best what it's currently doing
             Context context = VelibApplication.getCachedAppContext();
             GuidingService.bikingActivityAction.invoke(context);

@@ -5,44 +5,48 @@ import com.google.android.gms.location.DetectedActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 import app.mortendahl.velib.library.contextaware.BaseEvent;
 
 public class ActivityUpdateEvent extends BaseEvent {
 
-    public final int rawType;
-    public final boolean inVehicle;
-    public final boolean onBicycle;
-    public final boolean onFoot;
-    public final boolean still;
+    private final HashMap<String, Integer> confidence = new HashMap<>();
 
-    public final int confidence;
+    private ActivityUpdateEvent() {}
 
-    private ActivityUpdateEvent(int rawType, int confidence) {
-        // type
-        this.rawType = rawType;
-        this.inVehicle = rawType == DetectedActivity.IN_VEHICLE;
-        this.onBicycle = rawType == DetectedActivity.ON_BICYCLE;
-        this.onFoot = rawType == DetectedActivity.ON_FOOT;
-        this.still = rawType == DetectedActivity.STILL;
-        // confidence
-        this.confidence = confidence;
+    public static ActivityUpdateEvent fromPlayActivities(List<DetectedActivity> activities) {
+        ActivityUpdateEvent event = new ActivityUpdateEvent();
+        for (DetectedActivity activity : activities) {
+            int type = activity.getType();
+            int confidence = activity.getConfidence();
+            event.confidence.put(describeActivityType(type), confidence);
+        }
+        return event;
     }
 
-    public static ActivityUpdateEvent fromPlayActivity(DetectedActivity activity) {
-        ActivityUpdateEvent event = new ActivityUpdateEvent(activity.getType(), activity.getConfidence());
-        return event;
+    public int getConfidence(int type) {
+        return confidence.get(describeActivityType(type));
+    }
+
+    public int getConfidence(String type) {
+        return confidence.get(type);
     }
 
     @Override
     public String toString() {
-        return String.format("%s(%s, %d)", getClass().getSimpleName(), describeActivityType(rawType), confidence);
+        return String.format("%s(%d)", getClass().getSimpleName(), confidence.size());
     }
 
     @Override
     public JSONObject toJson() throws JSONException {
         JSONObject json = super.toJson();
-        json.put("type", describeActivityType(rawType));
-        json.put("confidence", confidence);
+        for (Map.Entry<String, Integer> entry : confidence.entrySet()) {
+            json.put(entry.getKey(), entry.getValue());
+        }
         return json;
     }
 
@@ -65,7 +69,7 @@ public class ActivityUpdateEvent extends BaseEvent {
             case DetectedActivity.WALKING:
                 return "walking";
         }
-        return String.format("other(%d)", type);
+        return String.format("other_%d", type);
     }
 
 }

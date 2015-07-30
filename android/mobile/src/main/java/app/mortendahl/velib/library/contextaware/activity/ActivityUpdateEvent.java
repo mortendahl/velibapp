@@ -29,11 +29,13 @@ public class ActivityUpdateEvent extends BaseEvent {
     }
 
     public int getConfidence(int type) {
-        return confidence.get(describeActivityType(type));
+        Integer value = confidence.get(describeActivityType(type));
+        return value != null ? value.intValue() : 0;
     }
 
     public int getConfidence(String type) {
-        return confidence.get(type);
+        Integer value = confidence.get(type);
+        return value != null ? value.intValue() : 0;
     }
 
     @Override

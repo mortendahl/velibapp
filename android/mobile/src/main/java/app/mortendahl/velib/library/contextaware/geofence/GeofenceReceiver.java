@@ -72,8 +72,6 @@ public class GeofenceReceiver extends BaseBroadcastReceiver {
             event.transition = fenceTransition;
             event.fenceIds = fenceIds;
 
-            EventBus.getDefault().post(event);
-
             ContextAwareApplication app = (ContextAwareApplication) context.getApplicationContext();
             app.getContextAwareHandler().onGeofenceTransition(event);
 

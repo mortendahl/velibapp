@@ -30,17 +30,21 @@ public class VelibContextAwareHandler implements ContextAwareHandler {
         DataStore.getCollection(eventStoreId).append(event);
     }
 
+    private void post(BaseEvent event) {
+        EventBus.getDefault().post(event);
+    }
+
     @Override
     public void onPowerUpdate(PowerUpdateEvent event) {
         record(event);
+        post(event);
     }
 
     @Override
     public void onActivityUpdate(ActivityUpdateEvent event) {
 
         record(event);
-
-        EventBus.getDefault().post(event);
+        post(event);
 
         int onBicycleConfidence = event.getConfidence(DetectedActivity.ON_BICYCLE);
         if (onBicycleConfidence > 50) {
@@ -53,19 +57,15 @@ public class VelibContextAwareHandler implements ContextAwareHandler {
 
     @Override
     public void onLocationUpdate(LocationUpdateEvent event) {
-
         record(event);
-
-        EventBus.getDefault().post(event);
-
-        //Logger.debug(Logger.TAG_SYSTEM, this, "bearing: " + event.location.getBearing());
-
+        post(event);
     }
 
     @Override
     public void onGeofenceTransition(GeofenceTransitionEvent event) {
 
         record(event);
+        post(event);
 
         Context context = VelibApplication.getCachedAppContext();
 
@@ -84,6 +84,7 @@ public class VelibContextAwareHandler implements ContextAwareHandler {
     @Override
     public void onConnectivityStabilised(ConnectivityStabilisedEvent event) {
         record(event);
+        post(event);
     }
 
     private Notification buildGeofenceTransitionNotification(Context context, String fenceId, String transition) {

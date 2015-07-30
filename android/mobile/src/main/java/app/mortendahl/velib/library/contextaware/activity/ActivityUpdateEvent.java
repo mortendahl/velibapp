@@ -40,7 +40,7 @@ public class ActivityUpdateEvent extends BaseEvent {
 
     @Override
     public String toString() {
-        return String.format("%s(%d)", getClass().getSimpleName(), confidence.size());
+        return String.format("%s(%s)", getClass().getSimpleName(), confidence.entrySet().toString());
     }
 
     @Override

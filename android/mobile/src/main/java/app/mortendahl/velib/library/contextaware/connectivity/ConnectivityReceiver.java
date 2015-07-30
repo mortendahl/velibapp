@@ -113,8 +113,6 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
                     event.type = ConnectivityStabilisedEvent.mapConnectivityType(activeNetwork);
                     event.ssid = currentSsid;
 
-                    EventBus.getDefault().post(event);
-
                     app.getContextAwareHandler().onConnectivityStabilised(event);
 
                 } else {
@@ -127,8 +125,6 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
                     event.connected = true;
                     event.type = ConnectivityStabilisedEvent.mapConnectivityType(activeNetwork);
                     event.ssid = null;
-
-                    EventBus.getDefault().post(event);
 
                     app.getContextAwareHandler().onConnectivityStabilised(event);
 
@@ -144,8 +140,6 @@ public class ConnectivityReceiver extends BaseBroadcastReceiver {
                 event.connected = false;
                 event.type = ConnectivityType.NONE;
                 event.ssid = null;
-
-                EventBus.getDefault().post(event);
 
                 app.getContextAwareHandler().onConnectivityStabilised(event);
 

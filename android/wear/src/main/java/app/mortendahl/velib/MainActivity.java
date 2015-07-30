@@ -394,6 +394,14 @@ public class MainActivity extends WearableActivity {
 
         @Override
         public void onLocationChanged(Location location) {
+
+            if (location == null) { return; }
+
+            if (stationMarker != null) {
+                float bearing = location.getBearing();
+                stationMarker.setRotation(bearing);
+            }
+
 //            ownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
 //            refreshOwnMarker();
 //            updateCameraPosition();
